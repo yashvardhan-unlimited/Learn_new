@@ -12,7 +12,6 @@ def register_user(data: UserRegister) -> TokenResponse:
     user = UserRecord(
         username=str(data.username).strip().lower(),
         password_hash=hash_password(data.password),
-        role="user",
     )
     return build_token_response(insert_user(user))
 

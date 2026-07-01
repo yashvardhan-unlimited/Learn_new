@@ -33,8 +33,3 @@ def get_current_user(
         raise credentials_error
     return user
 
-
-def require_admin(current_user: UserRecord = Depends(get_current_user)) -> UserRecord:
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Administrator access required.")
-    return current_user

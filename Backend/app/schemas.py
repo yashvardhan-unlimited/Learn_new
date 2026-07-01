@@ -6,8 +6,6 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
-from app.models import UserRole
-
 
 class UserRegister(BaseModel):
     username: str = Field(min_length=3, max_length=32)
@@ -23,7 +21,6 @@ class UserLogin(BaseModel):
 class UserPublic(BaseModel):
     id: UUID
     username: str
-    role: UserRole
     created_at: datetime
 
 

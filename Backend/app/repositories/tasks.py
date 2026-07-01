@@ -54,9 +54,9 @@ def delete_task(task_id: UUID, owner_id: UUID) -> dict[str, str]:
 
 
 def delete_any_task(task_id: UUID) -> dict[str, str]:
-    document = _find_document(task_id)    
-    _delete_document(document)    
-    return {"message": "Task deleted by administrator."}
+    document = _find_document(task_id)
+    _delete_document(document)
+    return {"message": "Task deleted."}
 
 
 def add_attachment(task_id: UUID, owner_id: UUID, record: dict) -> Task:

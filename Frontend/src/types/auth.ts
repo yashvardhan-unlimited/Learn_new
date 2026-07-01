@@ -1,9 +1,6 @@
-export type UserRole = 'user' | 'admin'
-
 export interface AuthUser {
   id: string
   username: string
-  role: UserRole
   created_at: string
 }
 

@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.database import ensure_indexes
-from app.routes import admin, attachments, auth, tasks
+from app.routes import attachments, auth, tasks
 
 
 @asynccontextmanager
@@ -30,11 +30,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Routers keep authentication, normal task, and admin endpoints separate.
+# Routers keep authentication, task, and attachment endpoints separate.
 app.include_router(auth.router)
 app.include_router(tasks.router)
 app.include_router(attachments.router)
-app.include_router(admin.router)
 
 
 # A decorator tells FastAPI which URL and HTTP method use the function below.

@@ -6,9 +6,6 @@ from datetime import datetime
 # UUID values provide unique IDs even if two tasks have the same title.
 from uuid import uuid4, UUID
 
-UserRole = Literal["user", "admin"]
-
-
 class Attachment(BaseModel):
     id: UUID = Field(default_factory=uuid4)
     filename: str
@@ -57,5 +54,4 @@ class UserRecord(BaseModel):
     id: UUID = Field(default_factory=uuid4)
     username: str
     password_hash: str
-    role: UserRole = "user"
     created_at: datetime = Field(default_factory=datetime.now)

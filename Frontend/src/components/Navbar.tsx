@@ -33,7 +33,7 @@ export function Navbar({ sortField, sortDirection, onSortFieldChange, onSortDire
           <option value="asc">Ascending</option>
           <option value="desc">Descending</option>
         </select>
-        <span className="ml-2 hidden text-sm text-slate-500 md:inline">{user.username} · {user.role}</span>
+        <span className="ml-2 hidden text-sm text-slate-500 md:inline">{user.username}</span>
         <button onClick={onLogout} className="ml-1 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">Logout</button>
       </div>
     </nav>
