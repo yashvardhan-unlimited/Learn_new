@@ -2,9 +2,37 @@
   {
     "id": "6bd2b20a-fce0-420f-85bd-05b713cfb087",
     "title": "study",
-    "description": "Complete your Maths homework by 9 pm.",
-    "priority": "medium",
+    "description": "Complete your Maths homework by 9 am.",
+    "priority": "high",
+    "status": "completed",
+    "created_at": "2026-06-30T20:13:12.734938",
+    "updated_at": "2026-06-30T21:45:03.373477"
+  },
+  {
+    "id": "09005714-d163-49db-b771-85efc30ac719",
+    "title": "Bring vegetables",
+    "description": "Bring tomatoes, potatoes and capsicum from the Bigbazaar.  ",
+    "priority": "low",
     "status": "pending",
-    "created_at": "2026-06-30T20:13:12.734938"
+    "created_at": "2026-06-30T21:26:00.556281",
+    "updated_at": "2026-06-30T21:27:39.914858"
+  },
+  {
+    "id": "819becc6-f8f7-4a53-862e-0e29daeac144",
+    "title": "Play",
+    "description": "Play football at 5 pm. ",
+    "priority": "medium",
+    "status": "in_progress",
+    "created_at": "2026-06-30T21:45:30.076844",
+    "updated_at": "2026-06-30T21:53:40.307553"
+  },
+  {
+    "id": "255ef582-b333-40f0-98c5-060cb4476d4b",
+    "title": "sleep",
+    "description": "Go to sleep.",
+    "priority": "medium",
+    "status": "completed",
+    "created_at": "2026-06-30T21:53:46.065233",
+    "updated_at": "2026-06-30T22:27:00.740415"
   }
 ]
