@@ -21,6 +21,13 @@ def insert_user(user: UserRecord) -> UserRecord:
         raise database_unavailable(error) from error
     return user
 
+def _validated_user(query: dict) -> UserRecord | None:
+    try:
+        document = users_collection.find_one(query, {"_id": 0})
+    except PyMongoError as error:
+        raise database_unavailable(error) from error
+    return UserRecord.model_validate(document) if document else None
+
 
 def find_user_by_username(username: str) -> UserRecord | None:
     return _validated_user({"username": username.strip().lower()})
@@ -28,14 +35,6 @@ def find_user_by_username(username: str) -> UserRecord | None:
 
 def find_user_by_id(user_id: UUID) -> UserRecord | None:
     return _validated_user({"id": str(user_id)})
-
-
-def _validated_user(query: dict) -> UserRecord | None:
-    try:
-        document = users_collection.find_one(query, {"_id": 0})
-    except PyMongoError as error:
-        raise database_unavailable(error) from error
-    return UserRecord.model_validate(document) if document else None
 
 
 def _claim_legacy_tasks_for_first_user(user: UserRecord) -> None:

@@ -14,15 +14,6 @@ tasks_collection: Collection = database["tasks"]
 users_collection: Collection = database["users"]
 
 
-def ensure_indexes() -> None:
-    """Create database constraints and query indexes during application startup."""
-    _migrate_legacy_usernames()
-    users_collection.create_index("username", unique=True)
-    users_collection.create_index("id", unique=True)
-    tasks_collection.create_index("id", unique=True)
-    tasks_collection.create_index([("owner_id", ASCENDING), ("created_at", ASCENDING)])
-
-
 def _migrate_legacy_usernames() -> None:
     """Copy old email-based user identifiers into the new username field."""
     legacy_users = users_collection.find(
@@ -36,6 +27,13 @@ def _migrate_legacy_usernames() -> None:
             {"$set": {"username": username}},
         )
 
+def ensure_indexes() -> None:
+    """Create database constraints and query indexes during application startup."""
+    _migrate_legacy_usernames()
+    users_collection.create_index("username", unique=True)
+    users_collection.create_index("id", unique=True)
+    tasks_collection.create_index("id", unique=True)
+    tasks_collection.create_index([("owner_id", ASCENDING), ("created_at", ASCENDING)])
 
 def database_unavailable(error: PyMongoError) -> HTTPException:
     """Convert low-level Mongo errors into a safe API response."""

@@ -26,9 +26,9 @@ def insert_task(data: TaskCreate, owner_id: UUID) -> Task:
     document = task.model_dump(mode="python")    
     document.update({"id": str(task.id), "owner_id": str(task.owner_id)})    
     try:    
-        tasks_collection.insert_one(document)    
+        tasks_collection.insert_one(document)       
     except PyMongoError as error:    
-        raise database_unavailable(error) from error    
+        raise database_unavailable(error) from error
     return task    
 
 
