@@ -27,9 +27,17 @@ def _migrate_legacy_usernames() -> None:
             {"$set": {"username": username}},
         )
 
+
+def _drop_legacy_email_index() -> None:
+    """Remove the obsolete constraint that rejects users without an email field."""
+    for name, index in users_collection.index_information().items():
+        if index.get("key") == [("email", ASCENDING)]:
+            users_collection.drop_index(name)
+
 def ensure_indexes() -> None:
     """Create database constraints and query indexes during application startup."""
     _migrate_legacy_usernames()
+    _drop_legacy_email_index()
     users_collection.create_index("username", unique=True)
     users_collection.create_index("id", unique=True)
     tasks_collection.create_index("id", unique=True)
