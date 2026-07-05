@@ -16,7 +16,15 @@ export async function authorizedFetch(path: string, options: RequestInit = {}): 
   const headers = new Headers(options.headers)
   if (token) headers.set('Authorization', `Bearer ${token}`)
 
-  const response = await fetch(`${API_URL}${path}`, { ...options, headers })
+  let response: Response
+  try {
+    response = await fetch(`${API_URL}${path}`, { ...options, headers })
+  } catch {
+    throw new ApiError(
+      `Cannot reach the API at ${API_URL}. Make sure the backend is running.`,
+      0,
+    )
+  }
   if (response.status === 401) {
     clearToken()
     window.dispatchEvent(new Event(UNAUTHORIZED_EVENT))
@@ -33,8 +41,12 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}): Pr
 async function errorMessage(response: Response): Promise<string> {
   const text = await response.text()
   try {
-    const data = JSON.parse(text) as { detail?: string }
-    return data.detail ?? text
+    const data = JSON.parse(text) as { detail?: string | Array<{ msg?: string }> }
+    if (typeof data.detail === 'string') return data.detail
+    if (Array.isArray(data.detail)) {
+      return data.detail.map((error) => error.msg ?? 'Invalid value').join('; ')
+    }
+    return text
   } catch {
     return text || `Request failed with status ${response.status}`
   }

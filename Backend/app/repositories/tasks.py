@@ -47,6 +47,20 @@ def update_task(task_id: UUID, data: TaskUpdate, owner_id: UUID) -> Task:
     return Task.model_validate(document)    
 
 
+def set_task_reminder(task_id: UUID, owner_id: UUID, event_id: str | None, calendar_url: str | None = None) -> Task:
+    document = _find_document(task_id, owner_id)
+    now = datetime.now()
+    if event_id:
+        operation = {"$set": {"reminder_event_id": event_id, "reminder_calendar_url": calendar_url, "updated_at": now}}
+    else:
+        operation = {"$unset": {"reminder_event_id": "", "reminder_calendar_url": ""}, "$set": {"updated_at": now}}
+    try:
+        tasks_collection.update_one({"id": document["id"], "owner_id": str(owner_id)}, operation)
+    except PyMongoError as error:
+        raise database_unavailable(error) from error
+    return find_task(task_id, owner_id)
+
+
 def delete_task(task_id: UUID, owner_id: UUID) -> dict[str, str]:    
     document = _find_document(task_id, owner_id)    
     _delete_document(document)    

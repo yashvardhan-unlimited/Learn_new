@@ -2,6 +2,7 @@
 
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
+from typing import Any
 
 import bcrypt
 from jose import JWTError, jwt
@@ -53,3 +54,42 @@ def decode_access_token(token: str) -> UUID:
         return UUID(subject)
     except (TypeError, ValueError) as error:
         raise JWTError("Token subject is invalid") from error
+
+
+def create_google_oauth_state(user_id: UUID) -> str:
+    payload = {
+        "sub": str(user_id),
+        "purpose": "google_oauth",
+        "exp": datetime.now(timezone.utc) + timedelta(minutes=10),
+    }
+    return jwt.encode(payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
+
+
+def decode_google_oauth_state(state: str) -> UUID:
+    payload = jwt.decode(state, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
+    if payload.get("purpose") != "google_oauth":
+        raise JWTError("Invalid OAuth state")
+    try:
+        return UUID(payload["sub"])
+    except (KeyError, TypeError, ValueError) as error:
+        raise JWTError("Invalid OAuth state subject") from error
+
+
+def create_tool_confirmation(user_id: UUID, actions: list[dict[str, Any]]) -> str:
+    payload = {
+        "sub": str(user_id),
+        "purpose": "tool_confirmation",
+        "actions": actions,
+        "exp": datetime.now(timezone.utc) + timedelta(minutes=5),
+    }
+    return jwt.encode(payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
+
+
+def decode_tool_confirmation(token: str, user_id: UUID) -> list[dict[str, Any]]:
+    payload = jwt.decode(token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
+    if payload.get("purpose") != "tool_confirmation" or payload.get("sub") != str(user_id):
+        raise JWTError("Invalid tool confirmation")
+    actions = payload.get("actions")
+    if not isinstance(actions, list) or not actions:
+        raise JWTError("Tool confirmation has no actions")
+    return actions

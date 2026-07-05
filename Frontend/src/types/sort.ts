@@ -1,2 +1,5 @@
-export type SortField = 'title' | 'created_at' | 'updated_at'
+export type SortField = 'due_at' | 'priority' | 'status' | 'title' | 'created_at' | 'updated_at'
 export type SortDirection = 'asc' | 'desc'
+export type StatusFilter = 'all' | 'pending' | 'in_progress' | 'completed'
+export type PriorityFilter = 'all' | 'high' | 'medium' | 'low'
+export type DeadlineFilter = 'all' | 'overdue' | 'due_soon' | 'scheduled' | 'none'

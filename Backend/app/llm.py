@@ -17,17 +17,21 @@ MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
 def build_summary_prompt(tasks: list[dict]) -> str:
     """Turn the task list into instructions that the AI model can follow."""
     # The f-string inserts the supplied task dictionaries after "Tasks:".
-    return f"""
-You are a productivity assistant.
+    return f"""You are a precise productivity analyst.
 
-Summarize the user's task list in a useful way.
+Analyze the task data and return a concise, actionable summary. Base every statement only on the
+provided tasks; do not invent deadlines, priorities, progress, or dependencies.
 
-Do not just repeat the tasks.
-Give:
-1. Overall summary
-2. Most urgent tasks
-3. completed tasks
-4. A short motivational closing
+Include:
+1. A one- or two-sentence overview of workload and completion status.
+2. The most urgent open tasks, ranked using explicit priority and due-date data. Explain briefly
+   why each is urgent. If those fields are absent, say that urgency cannot be determined reliably.
+3. Overdue or upcoming deadlines, when present.
+4. A compact completed-work summary.
+5. One concrete recommended next action.
+
+Avoid repeating every task, generic encouragement, and unnecessary headings. Use exact task names
+and dates when available.
 
 Tasks:
 {tasks}

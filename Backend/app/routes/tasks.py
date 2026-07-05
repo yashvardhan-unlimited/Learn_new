@@ -1,6 +1,8 @@
 """Authenticated task routes."""
 
-from fastapi import APIRouter, Depends
+from datetime import timedelta
+
+from fastapi import APIRouter, Depends, HTTPException
 from uuid import UUID
 
 from app.dependencies import get_current_user
@@ -10,9 +12,12 @@ from app.repositories.tasks import (
     insert_task as insert_task_record,
     list_tasks as list_task_records,
     update_task as update_task_record,
+    set_task_reminder,
 )
 from app.services.summary import stream_user_task_summary
 from app.services.attachments import delete_task_and_files
+from app.schemas import TaskReminderResponse
+from app.services.google_workspace import GoogleAuthorizationRequired, create_calendar_event, delete_calendar_event, google_error_message
 
 
 router = APIRouter(prefix="/tasks", tags=["Tasks"])
@@ -50,3 +55,46 @@ def edit_task(
 @router.delete("/{task_id}")
 def remove_task(task_id: UUID, user: UserRecord = Depends(get_current_user)):
     return delete_task_and_files(task_id, user.id)
+
+
+@router.post("/{task_id}/reminder", response_model=TaskReminderResponse)
+def add_calendar_reminder(task_id: UUID, user: UserRecord = Depends(get_current_user)):
+    task = find_task_record(task_id, user.id)
+    if task.due_at is None:
+        raise HTTPException(status_code=400, detail="Set a due date and time before adding a reminder.")
+    start = task.due_at
+    end = start + timedelta(minutes=30)
+    try:
+        event = create_calendar_event(
+            user.id,
+            f"Reminder: {task.title}",
+            start.isoformat(),
+            end.isoformat(),
+            "UTC",
+            task.description or "",
+        )
+    except GoogleAuthorizationRequired as error:
+        return TaskReminderResponse(created=False, message="Connect Google Workspace to add this reminder.", redirect_url=error.connect_url)
+    except Exception as error:
+        raise HTTPException(status_code=502, detail=google_error_message(error)) from error
+    return TaskReminderResponse(
+        created=True,
+        message="Reminder added to Google Calendar.",
+        calendar_url=event.get("htmlLink"),
+        task=set_task_reminder(task.id, user.id, event["id"], event.get("htmlLink")),
+    )
+
+
+@router.delete("/{task_id}/reminder", response_model=TaskReminderResponse)
+def remove_calendar_reminder(task_id: UUID, user: UserRecord = Depends(get_current_user)):
+    task = find_task_record(task_id, user.id)
+    if not task.reminder_event_id:
+        return TaskReminderResponse(created=False, message="This task has no Calendar reminder.", task=task)
+    try:
+        delete_calendar_event(user.id, task.reminder_event_id)
+    except GoogleAuthorizationRequired as error:
+        return TaskReminderResponse(created=True, message="Connect Google Workspace to remove this reminder.", redirect_url=error.connect_url, task=task)
+    except Exception as error:
+        raise HTTPException(status_code=502, detail=google_error_message(error)) from error
+    updated = set_task_reminder(task.id, user.id, None)
+    return TaskReminderResponse(created=False, message="Reminder removed from Google Calendar.", task=updated)

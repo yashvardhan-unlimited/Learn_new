@@ -87,7 +87,7 @@ def delete_attachment(task_id: UUID, attachment_id: UUID, owner_id: UUID) -> Tas
 
 def delete_task_and_files(task_id: UUID, owner_id: UUID | None = None) -> dict[str, str]:
     records = attachment_records(task_id, owner_id)
-    result = delete_task(task_id, owner_id) if owner_id else delete_any_task(task_id)
+    result = delete_task(task_id, owner_id) if owner_id is not None else delete_any_task(task_id)
     for record in records:
         _safe_unlink(_safe_path(Path(record["storage_path"])))
     return result

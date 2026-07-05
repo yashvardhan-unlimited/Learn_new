@@ -4,15 +4,18 @@ from fastapi import FastAPI
 # CORS allows the React frontend (running on another port) to call this API.
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
-from app.database import ensure_indexes
-from app.routes import attachments, auth, tasks
+from app.database import ensure_indexes, mongo_client
+from app.routes import attachments, auth, chat, google, tasks
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     # Unique indexes enforce username and UUID integrity in MongoDB.
     ensure_indexes()
-    yield
+    try:
+        yield
+    finally:
+        mongo_client.close()
 
 # Create the FastAPI application. The title appears in the automatic API docs.
 app = FastAPI(title="Task AI API", lifespan=lifespan)
@@ -34,6 +37,8 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(tasks.router)
 app.include_router(attachments.router)
+app.include_router(chat.router)
+app.include_router(google.router)
 
 
 # A decorator tells FastAPI which URL and HTTP method use the function below.

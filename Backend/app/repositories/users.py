@@ -30,11 +30,34 @@ def _validated_user(query: dict) -> UserRecord | None:
 
 
 def find_user_by_username(username: str) -> UserRecord | None:
-    return _validated_user({"username": username.strip().lower()})
+    identifier = username.strip().lower()
+    # `email` supports accounts created before authentication switched to
+    # usernames. New records are found by `username` as before.
+    return _validated_user({"$or": [{"username": identifier}, {"email": identifier}]})
 
 
 def find_user_by_id(user_id: UUID) -> UserRecord | None:
     return _validated_user({"id": str(user_id)})
+
+
+def google_refresh_token(user_id: UUID) -> str | None:
+    try:
+        document = users_collection.find_one({"id": str(user_id)}, {"google_refresh_token": 1})
+    except PyMongoError as error:
+        raise database_unavailable(error) from error
+    return document.get("google_refresh_token") if document else None
+
+
+def save_google_refresh_token(user_id: UUID, refresh_token: str) -> None:
+    try:
+        result = users_collection.update_one(
+            {"id": str(user_id)},
+            {"$set": {"google_refresh_token": refresh_token}},
+        )
+    except PyMongoError as error:
+        raise database_unavailable(error) from error
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="User not found.")
 
 
 def _claim_legacy_tasks_for_first_user(user: UserRecord) -> None:

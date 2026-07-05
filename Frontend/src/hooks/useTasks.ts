@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { createTask, deleteAttachment, deleteTask, downloadAttachment, getTasks, updateTask, uploadAttachment } from '../api/tasks'
+import { addTaskReminder, createTask, deleteAttachment, deleteTask, downloadAttachment, getTasks, removeTaskReminder, updateTask, uploadAttachment } from '../api/tasks'
 import type { Attachment, TaskCreate, TaskItem, TaskUpdate } from '../types/task'
 
 export function useTasks() {
@@ -16,6 +16,16 @@ export function useTasks() {
     return () => { active = false }
   }, [])
 
+  async function refreshTasks(): Promise<void> {
+    try {
+      setError('')
+      setTasks(await getTasks())
+    } catch (reason) {
+      setError(errorText(reason, 'Unable to refresh tasks'))
+      throw reason
+    }
+  }
+
   function addDraft(): void {
     const now = new Date().toISOString()
     setError('')
@@ -25,6 +35,9 @@ export function useTasks() {
       description: 'Add a description',
       status: 'pending',
       priority: 'medium',
+      due_at: null,
+      reminder_event_id: null,
+      reminder_calendar_url: null,
       created_at: now,
       updated_at: now,
       attachments: [],
@@ -99,11 +112,28 @@ export function useTasks() {
     }
   }
 
+  async function setReminder(taskId: string, remove: boolean): Promise<string> {
+    try {
+      setError('')
+      const response = remove ? await removeTaskReminder(taskId) : await addTaskReminder(taskId)
+      if (response.redirect_url) {
+        window.location.assign(response.redirect_url)
+        return 'Redirecting to Google…'
+      }
+      if (response.task) replaceTask(taskId, response.task)
+      return response.message
+    } catch (reason) {
+      const message = errorText(reason, 'Unable to add Google Calendar reminder')
+      setError(message)
+      throw reason
+    }
+  }
+
   function replaceTask(id: string, replacement: TaskItem): void {
     setTasks((current) => current.map((task) => task.id === id ? replacement : task))
   }
 
-  return { tasks, loading, error, addDraft, saveTask, removeTask, attachFile, removeAttachment, downloadFile }
+  return { tasks, loading, error, refreshTasks, addDraft, saveTask, removeTask, attachFile, removeAttachment, downloadFile, setReminder }
 }
 
 function toCreatePayload(task: TaskItem, update: TaskUpdate): TaskCreate {
@@ -112,6 +142,7 @@ function toCreatePayload(task: TaskItem, update: TaskUpdate): TaskCreate {
     description: update.description ?? task.description,
     status: update.status ?? task.status,
     priority: update.priority ?? task.priority,
+    due_at: update.due_at === undefined ? task.due_at : update.due_at,
   }
 }
 

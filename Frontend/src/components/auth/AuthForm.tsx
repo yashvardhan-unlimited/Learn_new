@@ -34,8 +34,8 @@ export function AuthForm({ mode, onSubmit, onSwitchMode }: AuthFormProps) {
       <p className="mt-2 text-sm text-slate-500">{isLogin ? 'Log in to manage your tasks.' : 'Register to create your private task workspace.'}</p>
       {error && <p className="mt-5 rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
       <label className="mt-6 block text-sm font-medium text-slate-700">
-        Username
-        <input type="text" required minLength={3} maxLength={32} autoComplete="username" value={credentials.username} onChange={(event) => setCredentials({ ...credentials, username: event.target.value })} className="mt-2 w-full rounded-lg border border-slate-300 px-3.5 py-2.5 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" />
+        {isLogin ? 'Username or email' : 'Username'}
+        <input type="text" required minLength={3} maxLength={isLogin ? 254 : 32} autoComplete="username" value={credentials.username} onChange={(event) => setCredentials({ ...credentials, username: event.target.value })} className="mt-2 w-full rounded-lg border border-slate-300 px-3.5 py-2.5 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" />
       </label>
       <label className="mt-4 block text-sm font-medium text-slate-700">
         Password

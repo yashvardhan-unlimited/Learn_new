@@ -42,6 +42,7 @@ def ensure_indexes() -> None:
     users_collection.create_index("id", unique=True)
     tasks_collection.create_index("id", unique=True)
     tasks_collection.create_index([("owner_id", ASCENDING), ("created_at", ASCENDING)])
+    tasks_collection.create_index([("owner_id", ASCENDING), ("due_at", ASCENDING)])
 
 def database_unavailable(error: PyMongoError) -> HTTPException:
     """Convert low-level Mongo errors into a safe API response."""

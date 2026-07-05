@@ -35,6 +35,22 @@ export function deleteTask(taskId: string): Promise<{ message: string }> {
   return apiRequest<{ message: string }>(`/tasks/${encodeURIComponent(taskId)}`, { method: 'DELETE' })
 }
 
+export interface ReminderResponse {
+  created: boolean
+  message: string
+  redirect_url?: string | null
+  calendar_url?: string | null
+  task?: Task | null
+}
+
+export function removeTaskReminder(taskId: string): Promise<ReminderResponse> {
+  return apiRequest<ReminderResponse>(`/tasks/${encodeURIComponent(taskId)}/reminder`, { method: 'DELETE' })
+}
+
+export function addTaskReminder(taskId: string): Promise<ReminderResponse> {
+  return apiRequest<ReminderResponse>(`/tasks/${encodeURIComponent(taskId)}/reminder`, { method: 'POST' })
+}
+
 export function uploadAttachment(taskId: string, file: File): Promise<Task> {
   const form = new FormData()
   form.append('file', file)

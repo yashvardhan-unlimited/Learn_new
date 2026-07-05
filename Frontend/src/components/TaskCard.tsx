@@ -11,14 +11,16 @@ interface TaskCardProps {
   onAttach: (id: string, file: File) => Promise<void>
   onDeleteAttachment: (taskId: string, attachmentId: string) => Promise<void>
   onDownloadAttachment: (taskId: string, attachment: Attachment) => Promise<void>
+  onSetReminder: (taskId: string, remove: boolean) => Promise<string>
 }
 
-export function TaskCard({ task, onSave, onDelete, onAttach, onDeleteAttachment, onDownloadAttachment }: TaskCardProps) {
+export function TaskCard({ task, onSave, onDelete, onAttach, onDeleteAttachment, onDownloadAttachment, onSetReminder }: TaskCardProps) {
   // draft stores edits locally, so typing does not immediately update FastAPI.
   const [draft, setDraft] = useState<TaskUpdate>(task)
   // A union state records which action is running, or null when idle.
-  const [busy, setBusy] = useState<'save' | 'delete' | null>(null)
+  const [busy, setBusy] = useState<'save' | 'delete' | 'reminder' | null>(null)
   const [attachmentBusy, setAttachmentBusy] = useState<string | null>(null)
+  const [reminderMessage, setReminderMessage] = useState('')
 
   // When fresh task props arrive after a reload, replace the local draft.
   useEffect(() => setDraft(task), [task])
@@ -30,7 +32,10 @@ export function TaskCard({ task, onSave, onDelete, onAttach, onDeleteAttachment,
     (draft.title ?? '') !== task.title ||
     (draft.description ?? '') !== task.description ||
     draft.status !== task.status ||
-    draft.priority !== task.priority
+    draft.priority !== task.priority ||
+    draft.due_at !== task.due_at
+
+  const deadlineState = getDeadlineState(task.due_at, task.status)
 
   // One helper handles the shared loading-state behavior for both buttons.
   async function perform(action: 'save' | 'delete') {
@@ -49,6 +54,16 @@ export function TaskCard({ task, onSave, onDelete, onAttach, onDeleteAttachment,
       await onAttach(task.id, file)
     } finally {
       setAttachmentBusy(null)
+    }
+  }
+
+  async function changeReminder(): Promise<void> {
+    setBusy('reminder')
+    setReminderMessage('')
+    try {
+      setReminderMessage(await onSetReminder(task.id, Boolean(task.reminder_event_id)))
+    } finally {
+      setBusy(null)
     }
   }
 
@@ -86,7 +101,25 @@ export function TaskCard({ task, onSave, onDelete, onAttach, onDeleteAttachment,
         <select aria-label="Task priority" value={draft.priority} onChange={(event) => setDraft({ ...draft, priority: event.target.value as TaskPriority })} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm capitalize outline-none focus:border-indigo-500">
           <option value="low">Low priority</option><option value="medium">Medium priority</option><option value="high">High priority</option>
         </select>
+        <label className="col-span-2 text-xs font-medium text-slate-600">
+          Due date and time
+          <input
+            aria-label="Task due date and time"
+            type="datetime-local"
+            value={toDateTimeLocal(draft.due_at)}
+            onChange={(event) => setDraft({
+              ...draft,
+              due_at: event.target.value ? new Date(event.target.value).toISOString() : null,
+            })}
+            className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-normal text-slate-800 outline-none focus:border-indigo-500"
+          />
+        </label>
       </div>
+      {task.due_at && (
+        <p className={`mt-3 rounded-lg px-3 py-2 text-sm font-semibold ${deadlineState.className}`}>
+          {deadlineState.label}: {new Date(task.due_at).toLocaleString()}
+        </p>
+      )}
       <div className="mt-4 space-y-1 text-xs text-slate-400">
         {/* Convert ISO timestamp strings from FastAPI into local date text. */}
         {task.isDraft ? (
@@ -136,7 +169,7 @@ export function TaskCard({ task, onSave, onDelete, onAttach, onDeleteAttachment,
           </ul>
         )}
       </div>
-      <div className="mt-5 flex gap-3 border-t border-slate-100 pt-4">
+      <div className="mt-5 flex flex-wrap gap-3 border-t border-slate-100 pt-4">
         <button
           disabled={busy !== null || !draft.title?.trim()}
           onClick={() => void perform('save')}
@@ -151,7 +184,11 @@ export function TaskCard({ task, onSave, onDelete, onAttach, onDeleteAttachment,
         <button disabled={busy !== null} onClick={() => void perform('delete')} className="rounded-lg border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50">
           {busy === 'delete' ? <LoadingIndicator label="Deleting…" compact /> : 'Delete'}
         </button>
+        <button title={!task.due_at ? 'Set and save a due date first' : task.reminder_event_id ? 'Remove this event from Google Calendar' : 'Add this task to Google Calendar'} disabled={busy !== null || task.isDraft || (!task.due_at && !task.reminder_event_id)} onClick={() => void changeReminder()} className={`rounded-lg border px-4 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50 ${task.reminder_event_id ? 'border-red-200 text-red-600 hover:bg-red-50' : 'border-indigo-200 text-indigo-600 hover:bg-indigo-50'}`}>
+          {busy === 'reminder' ? <LoadingIndicator label={task.reminder_event_id ? 'Removing…' : 'Adding…'} compact /> : task.reminder_event_id ? 'Remove reminder' : 'Add reminder'}
+        </button>
       </div>
+      {reminderMessage && <p className="mt-3 text-xs font-medium text-emerald-700">{reminderMessage}</p>}
     </article>
   )
 }
@@ -160,4 +197,21 @@ function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+function toDateTimeLocal(value: string | null | undefined): string {
+  if (!value) return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000)
+  return local.toISOString().slice(0, 16)
+}
+
+function getDeadlineState(dueAt: string | null, status: TaskStatus): { label: string; className: string } {
+  if (!dueAt) return { label: '', className: '' }
+  if (status === 'completed') return { label: 'Completed task deadline', className: 'bg-emerald-50 text-emerald-700' }
+  const millisecondsLeft = new Date(dueAt).getTime() - Date.now()
+  if (millisecondsLeft < 0) return { label: 'Overdue', className: 'bg-red-50 text-red-700' }
+  if (millisecondsLeft <= 24 * 60 * 60 * 1000) return { label: 'Due soon', className: 'bg-amber-50 text-amber-800' }
+  return { label: 'Due', className: 'bg-indigo-50 text-indigo-700' }
 }

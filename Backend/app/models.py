@@ -1,8 +1,8 @@
 # BaseModel gives these Python classes automatic validation and JSON conversion.
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 # Optional means a value may be None. Literal restricts a value to listed choices.
 from typing import Optional, Literal
-from datetime import datetime
+from datetime import datetime, timezone
 # UUID values provide unique IDs even if two tasks have the same title.
 from uuid import uuid4, UUID
 
@@ -22,6 +22,16 @@ class TaskCreate(BaseModel):
     description: Optional[str] = ""
     priority: Literal["low", "medium", "high"] = "medium"
     status: Literal["pending", "in_progress", "completed"] = "pending"
+    due_at: Optional[datetime] = None
+
+    @field_validator("due_at")
+    @classmethod
+    def normalize_due_at(cls, value: Optional[datetime]) -> Optional[datetime]:
+        if value is None:
+            return None
+        if value.tzinfo is None:
+            return value.replace(tzinfo=timezone.utc)
+        return value.astimezone(timezone.utc)
 
 
 # This model validates updates to an existing task.
@@ -31,6 +41,9 @@ class TaskUpdate(BaseModel):
     description: Optional[str] = None
     priority: Optional[Literal["low", "medium", "high"]] = None
     status: Optional[Literal["pending", "in_progress", "completed"]] = None
+    due_at: Optional[datetime] = None
+
+    _normalize_due_at = field_validator("due_at")(TaskCreate.normalize_due_at.__func__)
 
 
 # This is the complete task shape stored in MongoDB and returned by the API.
@@ -43,10 +56,15 @@ class Task(BaseModel):
     description: Optional[str] = ""
     priority: Literal["low", "medium", "high"] = "medium"
     status: Literal["pending", "in_progress", "completed"] = "pending"
+    due_at: Optional[datetime] = None
+    reminder_event_id: Optional[str] = None
+    reminder_calendar_url: Optional[str] = None
     attachments: list[Attachment] = Field(default_factory=list)
     # datetime.now records creation/update times when a Task is constructed.
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
+
+    _normalize_due_at = field_validator("due_at")(TaskCreate.normalize_due_at.__func__)
 
 
 # Internal database model. password_hash is never returned by API routes.

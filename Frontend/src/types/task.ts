@@ -19,6 +19,9 @@ export interface Task {
   description: string
   status: TaskStatus
   priority: TaskPriority
+  due_at: string | null
+  reminder_event_id: string | null
+  reminder_calendar_url: string | null
   created_at: string
   updated_at: string
   attachments: Attachment[]
@@ -35,6 +38,7 @@ export interface TaskCreate {
   description: string
   status: TaskStatus
   priority: TaskPriority
+  due_at: string | null
 }
 
 // Partial<T> makes every property in TaskCreate optional. That lets an update
