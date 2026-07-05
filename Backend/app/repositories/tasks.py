@@ -1,6 +1,6 @@
 """MongoDB persistence operations for tasks."""    
 
-from datetime import datetime    
+from datetime import datetime, timezone
 from uuid import UUID    
 
 from fastapi import HTTPException    
@@ -19,6 +19,61 @@ def list_tasks(owner_id: UUID) -> list[Task]:
         return [Task.model_validate(document) for document in documents]    
     except PyMongoError as error:    
         raise database_unavailable(error) from error    
+
+
+def query_tasks(
+    owner_id: UUID,
+    status: str | None = None,
+    priority: str | None = None,
+    deadline: str = "all",
+    sort_by: str = "due_at",
+    sort_direction: str = "asc",
+    limit: int = 5,
+) -> list[Task]:
+    """Return only the bounded task subset requested by the assistant."""
+    query: dict = {"owner_id": str(owner_id)}
+    if status:
+        query["status"] = status
+    if priority:
+        query["priority"] = priority
+    now = datetime.now(timezone.utc)
+    if deadline == "overdue":
+        query["due_at"] = {"$lt": now}
+        if not status:
+            query["status"] = {"$ne": "completed"}
+    elif deadline == "upcoming":
+        query["due_at"] = {"$gte": now}
+    elif deadline == "scheduled":
+        query["due_at"] = {"$ne": None}
+    elif deadline == "none":
+        query["due_at"] = None
+    direction = ASCENDING if sort_direction == "asc" else -1
+    sort_field = sort_by if sort_by in {"due_at", "priority", "status", "created_at", "updated_at", "title"} else "due_at"
+    sort_value: object = f"${sort_field}"
+    if sort_field == "priority":
+        sort_value = {"$switch": {"branches": [
+            {"case": {"$eq": ["$priority", "high"]}, "then": 3},
+            {"case": {"$eq": ["$priority", "medium"]}, "then": 2},
+        ], "default": 1}}
+    elif sort_field == "status":
+        sort_value = {"$switch": {"branches": [
+            {"case": {"$eq": ["$status", "in_progress"]}, "then": 1},
+            {"case": {"$eq": ["$status", "pending"]}, "then": 2},
+        ], "default": 3}}
+    pipeline = [
+        {"$match": query},
+        {"$addFields": {
+            "_sort_missing": {"$cond": [{"$eq": [{"$ifNull": [f"${sort_field}", None]}, None]}, 1, 0]},
+            "_sort_value": sort_value,
+        }},
+        {"$sort": {"_sort_missing": ASCENDING, "_sort_value": direction, "created_at": -1}},
+        {"$limit": max(1, min(limit, 20))},
+        {"$project": {"_id": 0, "_sort_missing": 0, "_sort_value": 0}},
+    ]
+    try:
+        return [Task.model_validate(document) for document in tasks_collection.aggregate(pipeline)]
+    except PyMongoError as error:
+        raise database_unavailable(error) from error
 
 
 def insert_task(data: TaskCreate, owner_id: UUID) -> Task:    

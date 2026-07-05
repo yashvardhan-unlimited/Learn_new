@@ -1,10 +1,12 @@
 """Safe task operations exposed to the AI chat agent."""
 
 from dataclasses import asdict, dataclass
+from datetime import datetime
 from uuid import UUID
+from zoneinfo import ZoneInfo
 
 from app.models import Task, TaskCreate, TaskUpdate
-from app.repositories.tasks import find_task, insert_task, list_tasks, update_task
+from app.repositories.tasks import find_task, insert_task, list_tasks, query_tasks, update_task
 from app.services.attachments import delete_task_and_files
 
 
@@ -30,7 +32,7 @@ def create_task_tool(
         TaskCreate(title=title, description=description, priority=priority, status=status, due_at=due_at),
         owner_id,
     )
-    deadline = f" Due {task.due_at.isoformat()}." if task.due_at else ""
+    deadline = f" Due {_format_ist(task.due_at)}." if task.due_at else ""
     return ToolResult(f'Created a {task.priority}-priority task: {task.title}.{deadline}', True)
 
 
@@ -72,7 +74,7 @@ def update_task_tool(
     if clear_due_at:
         changes.append("due date removed")
     elif due_at is not None:
-        changes.append(f"due date to {updated.due_at.isoformat()}")
+        changes.append(f"due date to {_format_ist(updated.due_at)}")
     return ToolResult(f'Updated "{updated.title}": set {" and ".join(changes)}.', True)
 
 
@@ -82,10 +84,33 @@ def list_tasks_tool(owner_id: UUID) -> ToolResult:
         return ToolResult("You have no tasks.")
     lines = [
         f'- {task.title} ({task.priority}, {task.status.replace("_", " ")}'
-        f'{f", due {task.due_at.isoformat()}" if task.due_at else ""})'
+        f'{f", due {_format_ist(task.due_at)}" if task.due_at else ""})'
         for task in tasks
     ]
     return ToolResult("Your tasks are:\n" + "\n".join(lines))
+
+
+def query_tasks_tool(
+    owner_id: UUID,
+    status: str | None = None,
+    priority: str | None = None,
+    deadline: str = "all",
+    sort_by: str = "due_at",
+    sort_direction: str = "asc",
+    limit: int = 5,
+    include_description: bool = False,
+) -> ToolResult:
+    tasks = query_tasks(owner_id, status, priority, deadline, sort_by, sort_direction, limit)
+    if not tasks:
+        return ToolResult("No tasks match those criteria.")
+    lines = []
+    for task in tasks:
+        due = _format_ist(task.due_at) if task.due_at else "none"
+        line = f'- {task.title} | status={task.status} | priority={task.priority} | due={due}'
+        if include_description and task.description:
+            line += f" | description={task.description}"
+        lines.append(line)
+    return ToolResult(f"Matching tasks ({len(tasks)} returned):\n" + "\n".join(lines))
 
 
 def summarize_tasks_tool(owner_id: UUID) -> ToolResult:
@@ -101,7 +126,7 @@ def summarize_tasks_tool(owner_id: UUID) -> ToolResult:
         {counts['in_progress']} in progress, and {counts['completed']} completed."""
     )
     if urgent:
-        due = f", due {urgent.due_at.isoformat()}" if urgent.due_at else ""
+        due = f", due {_format_ist(urgent.due_at)}" if urgent.due_at else ""
         summary += f' The most urgent open task is "{urgent.title}"{due}.'
     return ToolResult(summary)
 
@@ -149,3 +174,7 @@ def _single_matching_task(owner_id: UUID, query: str) -> tuple[Task | None, str 
         names = ", ".join(f'"{task.title}"' for task in matches)
         return None, f"Multiple tasks match: {names}. Which one do you mean?"
     return matches[0], None
+
+
+def _format_ist(value: datetime) -> str:
+    return value.astimezone(ZoneInfo("Asia/Kolkata")).strftime("%A, %d %B %Y at %I:%M %p IST")

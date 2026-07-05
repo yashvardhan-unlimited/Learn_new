@@ -3,6 +3,15 @@
 FastAPI backend for authenticated task management, attachments, AI summaries, and
 an MCP-backed task chat assistant.
 
+## How to start the app
+So It will be done in 3 steps, 
+open 3 different terminals and run the below commands respectively in frontend and backend 
+``` powershell
+Frontend> npm run dev
+Backend> uv run --no-sync uvicorn app.main:app --reload
+Backend> uv run --no-sync python MCP_Server/server.py
+```
+
 ## Structure
 
 ```text

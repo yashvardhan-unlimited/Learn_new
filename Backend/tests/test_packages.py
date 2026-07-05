@@ -29,7 +29,7 @@ class MCPIntegrationTests(unittest.IsolatedAsyncioTestCase):
         async with task_mcp_client(uuid4()) as client:
             tools = await client.openai_tools()
 
-        self.assertEqual(len(tools), 9)
+        self.assertEqual(len(tools), 12)
         for tool in tools:
             properties = tool["function"]["parameters"].get("properties", {})
             self.assertNotIn("owner_id", properties)

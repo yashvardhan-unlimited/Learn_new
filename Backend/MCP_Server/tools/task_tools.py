@@ -12,6 +12,7 @@ from app.ai_tools import (
     delete_task_tool,
     execute_task_tool,
     list_tasks_tool,
+    query_tasks_tool,
     summarize_tasks_tool,
     update_task_tool,
 )
@@ -55,6 +56,20 @@ def list_tasks(owner_id: str) -> dict:
     return list_tasks_tool(_owner(owner_id)).as_dict()
 
 
+def query_tasks(
+    owner_id: str,
+    status: Literal["pending", "in_progress", "completed"] | None = None,
+    priority: Literal["low", "medium", "high"] | None = None,
+    deadline: Literal["all", "overdue", "upcoming", "scheduled", "none"] = "all",
+    sort_by: Literal["due_at", "priority", "status", "created_at", "updated_at", "title"] = "due_at",
+    sort_direction: Literal["asc", "desc"] = "asc",
+    limit: int = 5,
+    include_description: bool = False,
+) -> dict:
+    """Query a compact, filtered, sorted subset of tasks. Use the user's requested limit (maximum 20) instead of listing everything."""
+    return query_tasks_tool(_owner(owner_id), status, priority, deadline, sort_by, sort_direction, limit, include_description).as_dict()
+
+
 def summarize_tasks(owner_id: str) -> dict:
     """Summarize the authenticated user's task counts and urgency."""
     return summarize_tasks_tool(_owner(owner_id)).as_dict()
@@ -72,6 +87,7 @@ def register_task_tools(mcp: FastMCP) -> None:
         delete_task,
         update_task,
         list_tasks,
+        query_tasks,
         summarize_tasks,
         execute_task,
     ):

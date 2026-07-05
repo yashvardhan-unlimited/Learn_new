@@ -4,7 +4,7 @@ from pydantic import ValidationError
 
 from app.schemas import ChatRequest
 from app.security import create_tool_confirmation, decode_tool_confirmation
-from app.services.chat import _current_time_context
+from app.services.chat import _current_time_context, _required_task_tool
 from uuid import uuid4
 
 
@@ -43,3 +43,11 @@ def test_chat_time_context_contains_day_timezone_and_rfc3339_value() -> None:
     assert "Current date/time context:" in context
     assert "Asia/Kolkata" in context
     assert "RFC 3339 value:" in context
+
+
+def test_live_task_questions_require_the_right_tool() -> None:
+    assert _required_task_tool("Tell me tasks with an upcoming due date") == "query_tasks"
+    assert _required_task_tool("How many pending tasks do I have?") == "summarize_tasks"
+    assert _required_task_tool("Create a task due tomorrow") is None
+    assert _required_task_tool("Add a calendar reminder for my report task") == "add_task_reminder"
+    assert _required_task_tool("Remove the reminder from my report task") == "remove_task_reminder"

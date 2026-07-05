@@ -8,8 +8,14 @@ interface ChatPanelProps {
   onTasksChanged: () => Promise<void>
 }
 
+const WELCOME_MESSAGE: ChatMessageItem = {
+  id: 'welcome',
+  role: 'assistant',
+  content: 'I can manage tasks, search the web, create calendar events, and compose Gmail drafts.',
+}
+
 export function ChatPanel({ onTasksChanged }: ChatPanelProps) {
-  const [messages, setMessages] = useState<ChatMessageItem[]>([{ id: 'welcome', role: 'assistant', content: 'I can manage tasks, search the web, create calendar events, and compose Gmail drafts.' }])
+  const [messages, setMessages] = useState<ChatMessageItem[]>([WELCOME_MESSAGE])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -26,6 +32,12 @@ export function ChatPanel({ onTasksChanged }: ChatPanelProps) {
     event.preventDefault()
     const message = input.trim()
     if (!message || loading) return
+    if (message.toLowerCase() === 'clear') {
+      setMessages([WELCOME_MESSAGE])
+      setInput('')
+      setError('')
+      return
+    }
     setMessages((current) => [...current, { id: crypto.randomUUID(), role: 'user', content: message }])
     setInput('')
     setError('')
