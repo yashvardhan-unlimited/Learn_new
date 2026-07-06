@@ -1,6 +1,6 @@
 import { clearToken, getToken } from '../auth/token'
 
-export const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
+export const API_URL = import.meta.env.VITE_API_URL ?? 'https://notepad-backend-qec2.onrender.com'
 export const UNAUTHORIZED_EVENT = 'auth:unauthorized'
 
 export class ApiError extends Error {
