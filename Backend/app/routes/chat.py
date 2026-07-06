@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException
 from httpx import ConnectError
+from mcp.shared.exceptions import McpError
 
 from app.dependencies import get_current_user
 from app.models import UserRecord
@@ -33,7 +34,7 @@ async def chat(request: ChatRequest, user: UserRecord = Depends(get_current_user
 
 
 def _is_mcp_connection_error(error: BaseException) -> bool:
-    if isinstance(error, (ConnectError, ConnectionError)):
+    if isinstance(error, (ConnectError, ConnectionError, McpError)):
         return True
     if isinstance(error, BaseExceptionGroup):
         return any(_is_mcp_connection_error(nested) for nested in error.exceptions)

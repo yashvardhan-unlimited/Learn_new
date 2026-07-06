@@ -49,8 +49,14 @@ class TaskMCPClient:
 async def task_mcp_client(owner_id: UUID) -> AsyncIterator[TaskMCPClient]:
     if not SERVER_PATH.is_file():
         raise RuntimeError(f"MCP server was not found at {SERVER_PATH}")
-    parameters = StdioServerParameters(command=sys.executable, args=[str(SERVER_PATH)])
-    async with stdio_client(parameters) as (read_stream, write_stream):
+    parameters = StdioServerParameters(
+        command=sys.executable,
+        args=[str(SERVER_PATH)],
+        cwd=str(SERVER_PATH.parent.parent),
+    )
+    # Forward child-process diagnostics to the FastAPI logs. Without this,
+    # deployment failures surface only as the unhelpful "Connection closed".
+    async with stdio_client(parameters, errlog=sys.stderr) as (read_stream, write_stream):
         async with ClientSession(read_stream, write_stream) as session:
             await session.initialize()
             yield TaskMCPClient(session, owner_id)
