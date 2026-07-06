@@ -1,16 +1,20 @@
 """Client bridge between the FastAPI chat agent and the task MCP server."""
 
 import json
+import sys
 from contextlib import asynccontextmanager
 from copy import deepcopy
+from pathlib import Path
 from typing import AsyncIterator
 from uuid import UUID
 
-from mcp import ClientSession
-from mcp.client.streamable_http import streamable_http_client
+from mcp import ClientSession, StdioServerParameters
+from mcp.client.stdio import stdio_client
 
 from app.ai_tools import ToolResult
-from app.config import settings
+
+
+SERVER_PATH = Path(__file__).resolve().parent.parent / "MCP_Server" / "server.py"
 
 
 class TaskMCPClient:
@@ -43,7 +47,10 @@ class TaskMCPClient:
 
 @asynccontextmanager
 async def task_mcp_client(owner_id: UUID) -> AsyncIterator[TaskMCPClient]:
-    async with streamable_http_client(settings.mcp_server_url) as (read_stream, write_stream, _):
+    if not SERVER_PATH.is_file():
+        raise RuntimeError(f"MCP server was not found at {SERVER_PATH}")
+    parameters = StdioServerParameters(command=sys.executable, args=[str(SERVER_PATH)])
+    async with stdio_client(parameters) as (read_stream, write_stream):
         async with ClientSession(read_stream, write_stream) as session:
             await session.initialize()
             yield TaskMCPClient(session, owner_id)

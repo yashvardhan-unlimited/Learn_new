@@ -44,17 +44,13 @@ of truth.
 2. Install dependencies with `uv sync` (recommended), or
    `python -m pip install -r requirements.txt`.
 3. Start MongoDB.
-4. In one terminal, start MCP with
-   `uv run --no-sync python MCP_Server/server.py`.
-5. In another terminal, start FastAPI with
-   `uv run --no-sync uvicorn app.main:app --reload`.
+4. Start FastAPI with `uv run --no-sync uvicorn app.main:app --reload`.
+   FastAPI launches the stdio MCP server automatically when chat is used.
 
 The `--no-sync` option is recommended when the project is stored in OneDrive,
 which can lock files while uv checks the environment. Run `uv sync` separately
 after changing dependencies.
 API documentation is available at `http://127.0.0.1:8000/docs`.
-The MCP endpoint is `http://127.0.0.1:8001/mcp`; override it with
-`MCP_SERVER_URL` when the services run on different hosts.
 
 ## Google Calendar and Gmail drafts
 

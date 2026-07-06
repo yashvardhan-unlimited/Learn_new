@@ -1,6 +1,6 @@
 # Task AI MCP server
 
-This Streamable HTTP MCP server exposes the task chatbot operations:
+This stdio MCP server exposes the task chatbot operations:
 
 - `create_task`
 - `delete_task`
@@ -9,15 +9,10 @@ This Streamable HTTP MCP server exposes the task chatbot operations:
 - `summarize_tasks`
 - `execute_task`
 
-Run the server independently from the `Backend` directory:
-
-```powershell
-uv run --no-sync python MCP_Server/server.py
-```
-
-It listens on `http://127.0.0.1:8001/mcp` by default. FastAPI connects to the
-`MCP_SERVER_URL` configured in `Backend/.env`. The backend injects the authenticated
-`owner_id`, so the language model cannot select another user's task scope.
+FastAPI starts this server automatically as a subprocess for each chat request.
+It communicates over stdin/stdout and does not expose a network port. The backend
+injects the authenticated `owner_id`, so the language model cannot select another
+user's task scope.
 
 To inspect the server with MCP Inspector:
 

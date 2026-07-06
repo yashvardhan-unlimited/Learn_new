@@ -1,6 +1,5 @@
-"""Streamable HTTP MCP server exposing the task application's safe AI tools."""
+"""stdio MCP server launched on demand by the FastAPI application."""
 
-import os
 import sys
 from pathlib import Path
 
@@ -13,16 +12,10 @@ load_dotenv(PROJECT_ROOT / ".env")
 
 from MCP_Server.tools import register_productivity_tools, register_task_tools  # noqa: E402
 
-mcp = FastMCP(
-    "Task AI tools",
-    host=os.getenv("MCP_SERVER_HOST", "127.0.0.1"),
-    port=int(os.getenv("MCP_SERVER_PORT", "8001")),
-    streamable_http_path="/mcp",
-    stateless_http=True,
-)
+mcp = FastMCP("Task AI tools")
 register_task_tools(mcp)
 register_productivity_tools(mcp)
 
 
 if __name__ == "__main__":
-    mcp.run(transport="streamable-http")
+    mcp.run(transport="stdio")

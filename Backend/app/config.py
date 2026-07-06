@@ -60,7 +60,6 @@ class Settings:
         ).split(",")
         if origin.strip()
     )
-    mcp_server_url: str = os.getenv("MCP_SERVER_URL", "http://127.0.0.1:8001/mcp")
     backend_public_url: str = os.getenv("BACKEND_PUBLIC_URL", "http://127.0.0.1:8000")
     frontend_app_url: str = os.getenv("FRONTEND_APP_URL", "http://localhost:5173")
     google_redirect_uri: str = os.getenv("GOOGLE_REDIRECT_URI", "http://127.0.0.1:8000/google/callback")
