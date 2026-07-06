@@ -11,11 +11,11 @@ interface TaskListProps {
   onDelete: (id: string) => Promise<void>
   onAttach: (id: string, file: File) => Promise<void>
   onDeleteAttachment: (taskId: string, attachmentId: string) => Promise<void>
-  onDownloadAttachment: (taskId: string, attachment: Attachment) => Promise<void>
+  onViewAttachment: (taskId: string, attachment: Attachment) => Promise<void>
   onSetReminder: (taskId: string, remove: boolean) => Promise<string>
 }
 
-export function TaskList({ tasks, loading, onSave, onDelete, onAttach, onDeleteAttachment, onDownloadAttachment, onSetReminder }: TaskListProps) {
+export function TaskList({ tasks, loading, onSave, onDelete, onAttach, onDeleteAttachment, onViewAttachment, onSetReminder }: TaskListProps) {
   // Early returns make loading and empty states easy to read.
   if (loading) return <LoadingIndicator label="Loading tasks…" />
   return (
@@ -27,7 +27,7 @@ export function TaskList({ tasks, loading, onSave, onDelete, onAttach, onDeleteA
       ) : (
         <div className="grid gap-5 xl:grid-cols-2">
           {tasks.map((task) => (
-            <TaskCard key={task.id} task={task} onSave={onSave} onDelete={onDelete} onAttach={onAttach} onDeleteAttachment={onDeleteAttachment} onDownloadAttachment={onDownloadAttachment} onSetReminder={onSetReminder} />
+            <TaskCard key={task.id} task={task} onSave={onSave} onDelete={onDelete} onAttach={onAttach} onDeleteAttachment={onDeleteAttachment} onViewAttachment={onViewAttachment} onSetReminder={onSetReminder} />
           ))}
         </div>
       )}

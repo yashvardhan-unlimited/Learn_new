@@ -15,7 +15,7 @@ export default function App() {
     <main className="min-h-screen bg-slate-50 lg:grid lg:h-dvh lg:min-h-0 lg:grid-cols-4 lg:overflow-hidden">
       <section className="lg:col-span-3 lg:flex lg:h-full lg:min-h-0 lg:flex-col lg:overflow-hidden">
         <Navbar sort={sort} totalTasks={taskState.tasks.length} user={user!} onLogout={logout} />
-        <TaskWorkspace tasks={sort.sortedTasks} loading={taskState.loading} error={taskState.error} onCreate={taskState.addDraft} onSave={taskState.saveTask} onDelete={taskState.removeTask} onAttach={taskState.attachFile} onDeleteAttachment={taskState.removeAttachment} onDownloadAttachment={taskState.downloadFile} onSetReminder={taskState.setReminder} />
+        <TaskWorkspace tasks={sort.sortedTasks} loading={taskState.loading} error={taskState.error} onCreate={taskState.addDraft} onSave={taskState.saveTask} onDelete={taskState.removeTask} onAttach={taskState.attachFile} onDeleteAttachment={taskState.removeAttachment} onViewAttachment={taskState.viewFile} onSetReminder={taskState.setReminder} />
       </section>
       <ChatPanel onTasksChanged={taskState.refreshTasks} />
     </main>

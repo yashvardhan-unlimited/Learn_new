@@ -96,18 +96,20 @@ export function useTasks() {
     }
   }
 
-  async function downloadFile(taskId: string, attachment: Attachment): Promise<void> {
+  async function viewFile(taskId: string, attachment: Attachment): Promise<void> {
+    const preview = window.open('', '_blank')
+    if (!preview) throw new Error('Allow pop-ups to preview attachments.')
+    preview.opener = null
+    preview.document.body.textContent = 'Loading attachment preview…'
     try {
       setError('')
       const blob = await downloadAttachment(taskId, attachment.id)
       const url = URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = attachment.filename
-      link.click()
-      URL.revokeObjectURL(url)
+      preview.location.href = url
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000)
     } catch (reason) {
-      setError(errorText(reason, 'Unable to download attachment'))
+      preview.close()
+      setError(errorText(reason, 'Unable to preview attachment'))
       throw reason
     }
   }
@@ -133,7 +135,7 @@ export function useTasks() {
     setTasks((current) => current.map((task) => task.id === id ? replacement : task))
   }
 
-  return { tasks, loading, error, refreshTasks, addDraft, saveTask, removeTask, attachFile, removeAttachment, downloadFile, setReminder }
+  return { tasks, loading, error, refreshTasks, addDraft, saveTask, removeTask, attachFile, removeAttachment, viewFile, setReminder }
 }
 
 function toCreatePayload(task: TaskItem, update: TaskUpdate): TaskCreate {

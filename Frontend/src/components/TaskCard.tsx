@@ -10,11 +10,11 @@ interface TaskCardProps {
   onDelete: (id: string) => Promise<void>
   onAttach: (id: string, file: File) => Promise<void>
   onDeleteAttachment: (taskId: string, attachmentId: string) => Promise<void>
-  onDownloadAttachment: (taskId: string, attachment: Attachment) => Promise<void>
+  onViewAttachment: (taskId: string, attachment: Attachment) => Promise<void>
   onSetReminder: (taskId: string, remove: boolean) => Promise<string>
 }
 
-export function TaskCard({ task, onSave, onDelete, onAttach, onDeleteAttachment, onDownloadAttachment, onSetReminder }: TaskCardProps) {
+export function TaskCard({ task, onSave, onDelete, onAttach, onDeleteAttachment, onViewAttachment, onSetReminder }: TaskCardProps) {
   // draft stores edits locally, so typing does not immediately update FastAPI.
   const [draft, setDraft] = useState<TaskUpdate>(task)
   // A union state records which action is running, or null when idle.
@@ -67,10 +67,10 @@ export function TaskCard({ task, onSave, onDelete, onAttach, onDeleteAttachment,
     }
   }
 
-  async function attachmentAction(action: 'download' | 'delete', attachment: Attachment): Promise<void> {
+  async function attachmentAction(action: 'view' | 'delete', attachment: Attachment): Promise<void> {
     setAttachmentBusy(`${action}-${attachment.id}`)
     try {
-      if (action === 'download') await onDownloadAttachment(task.id, attachment)
+      if (action === 'view') await onViewAttachment(task.id, attachment)
       else await onDeleteAttachment(task.id, attachment.id)
     } finally {
       setAttachmentBusy(null)
@@ -157,8 +157,8 @@ export function TaskCard({ task, onSave, onDelete, onAttach, onDeleteAttachment,
                   <p className="text-[11px] text-slate-400">{formatFileSize(attachment.size)}</p>
                 </div>
                 <div className="flex shrink-0 gap-2">
-                  <button disabled={attachmentBusy !== null} onClick={() => void attachmentAction('download', attachment)} className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 disabled:opacity-50">
-                    {attachmentBusy === `download-${attachment.id}` ? 'Loading…' : 'Download'}
+                  <button disabled={attachmentBusy !== null} onClick={() => void attachmentAction('view', attachment)} className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 disabled:opacity-50">
+                    {attachmentBusy === `view-${attachment.id}` ? 'Opening…' : 'View'}
                   </button>
                   <button disabled={attachmentBusy !== null} onClick={() => void attachmentAction('delete', attachment)} className="text-xs font-semibold text-red-600 hover:text-red-800 disabled:opacity-50">
                     {attachmentBusy === `delete-${attachment.id}` ? 'Removing…' : 'Remove'}

@@ -19,7 +19,7 @@ export function ChatPanel({ onTasksChanged }: ChatPanelProps) {
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [permissionRequired, setPermissionRequired] = useState(false)
+  const [permissionRequired, setPermissionRequired] = useState(true)
   const messagesRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
