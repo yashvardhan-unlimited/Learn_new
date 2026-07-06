@@ -54,7 +54,10 @@ class Settings:
     max_attachment_bytes: int = int(os.getenv("MAX_ATTACHMENT_BYTES", str(10 * 1024 * 1024)))
     frontend_origins: tuple[str, ...] = tuple(
         origin.strip()
-        for origin in os.getenv("FRONTEND_ORIGINS", "http://localhost:5173").split(",")
+        for origin in os.getenv(
+            "FRONTEND_ORIGINS",
+            "http://localhost:5173,https://learn-new-ecru.vercel.app",
+        ).split(",")
         if origin.strip()
     )
     mcp_server_url: str = os.getenv("MCP_SERVER_URL", "http://127.0.0.1:8001/mcp")
