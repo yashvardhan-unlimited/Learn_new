@@ -17,7 +17,7 @@ from app.repositories.tasks import (
 from app.services.summary import stream_user_task_summary
 from app.services.attachments import delete_task_and_files
 from app.schemas import TaskReminderResponse
-from app.services.google_workspace import GoogleAuthorizationRequired, create_calendar_event, delete_calendar_event, google_error_message
+from app.services.google_workspace import CALENDAR_SCOPE, GoogleAuthorizationRequired, create_calendar_event, delete_calendar_event, google_connect_url, google_error_message
 
 
 router = APIRouter(prefix="/tasks", tags=["Tasks"])
@@ -74,7 +74,8 @@ def add_calendar_reminder(task_id: UUID, user: UserRecord = Depends(get_current_
             task.description or "",
         )
     except GoogleAuthorizationRequired as error:
-        return TaskReminderResponse(created=False, message="Connect Google Workspace to add this reminder.", redirect_url=error.connect_url)
+        connect_url = google_connect_url(user.id, [CALENDAR_SCOPE], "add_task_reminder", str(task.id))
+        return TaskReminderResponse(created=False, message="Connect Google Workspace to add this reminder.", redirect_url=connect_url)
     except Exception as error:
         raise HTTPException(status_code=502, detail=google_error_message(error)) from error
     return TaskReminderResponse(
@@ -93,7 +94,8 @@ def remove_calendar_reminder(task_id: UUID, user: UserRecord = Depends(get_curre
     try:
         delete_calendar_event(user.id, task.reminder_event_id)
     except GoogleAuthorizationRequired as error:
-        return TaskReminderResponse(created=True, message="Connect Google Workspace to remove this reminder.", redirect_url=error.connect_url, task=task)
+        connect_url = google_connect_url(user.id, [CALENDAR_SCOPE], "remove_task_reminder", str(task.id))
+        return TaskReminderResponse(created=True, message="Connect Google Workspace to remove this reminder.", redirect_url=connect_url, task=task)
     except Exception as error:
         raise HTTPException(status_code=502, detail=google_error_message(error)) from error
     updated = set_task_reminder(task.id, user.id, None)

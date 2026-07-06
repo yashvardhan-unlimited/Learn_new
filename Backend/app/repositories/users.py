@@ -48,11 +48,19 @@ def google_refresh_token(user_id: UUID) -> str | None:
     return document.get("google_refresh_token") if document else None
 
 
-def save_google_refresh_token(user_id: UUID, refresh_token: str) -> None:
+def google_granted_scopes(user_id: UUID) -> set[str]:
+    try:
+        document = users_collection.find_one({"id": str(user_id)}, {"google_scopes": 1})
+    except PyMongoError as error:
+        raise database_unavailable(error) from error
+    return set(document.get("google_scopes", [])) if document else set()
+
+
+def save_google_refresh_token(user_id: UUID, refresh_token: str, scopes: list[str]) -> None:
     try:
         result = users_collection.update_one(
             {"id": str(user_id)},
-            {"$set": {"google_refresh_token": refresh_token}},
+            {"$set": {"google_refresh_token": refresh_token, "google_scopes": sorted(set(scopes))}},
         )
     except PyMongoError as error:
         raise database_unavailable(error) from error

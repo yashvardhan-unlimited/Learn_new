@@ -56,23 +56,44 @@ def decode_access_token(token: str) -> UUID:
         raise JWTError("Token subject is invalid") from error
 
 
-def create_google_oauth_state(user_id: UUID) -> str:
+def create_google_oauth_state(
+    user_id: UUID,
+    scopes: list[str],
+    action: str | None = None,
+    task_id: str | None = None,
+) -> str:
     payload = {
         "sub": str(user_id),
         "purpose": "google_oauth",
+        "scopes": scopes,
+        "action": action,
+        "task_id": task_id,
         "exp": datetime.now(timezone.utc) + timedelta(minutes=10),
     }
     return jwt.encode(payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
 
 
 def decode_google_oauth_state(state: str) -> UUID:
+    return decode_google_oauth_state_details(state)["owner_id"]
+
+
+def decode_google_oauth_state_details(state: str) -> dict[str, Any]:
     payload = jwt.decode(state, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
     if payload.get("purpose") != "google_oauth":
         raise JWTError("Invalid OAuth state")
     try:
-        return UUID(payload["sub"])
+        owner_id = UUID(payload["sub"])
     except (KeyError, TypeError, ValueError) as error:
         raise JWTError("Invalid OAuth state subject") from error
+    scopes = payload.get("scopes")
+    if not isinstance(scopes, list) or not scopes or not all(isinstance(scope, str) for scope in scopes):
+        raise JWTError("Invalid OAuth scopes")
+    return {
+        "owner_id": owner_id,
+        "scopes": scopes,
+        "action": payload.get("action"),
+        "task_id": payload.get("task_id"),
+    }
 
 
 def create_tool_confirmation(user_id: UUID, actions: list[dict[str, Any]]) -> str:

@@ -8,7 +8,7 @@ from uuid import UUID
 
 from app.ai_tools import ToolResult, _single_matching_task
 from app.repositories.tasks import set_task_reminder
-from app.services.google_workspace import GoogleAuthorizationRequired, create_calendar_event, create_gmail_draft, delete_calendar_event, google_error_message
+from app.services.google_workspace import CALENDAR_SCOPE, GoogleAuthorizationRequired, create_calendar_event, create_gmail_draft, delete_calendar_event, google_connect_url, google_error_message
 
 
 def calendar_event_tool(owner_id: UUID, title: str, start: str, end: str, timezone: str = "Asia/Kolkata", description: str = "", location: str = "") -> ToolResult:
@@ -49,7 +49,8 @@ def add_task_reminder_tool(owner_id: UUID, task_query: str) -> ToolResult:
             task.description or "",
         )
     except GoogleAuthorizationRequired as auth_error:
-        return ToolResult(str(auth_error), redirect_url=auth_error.connect_url)
+        connect_url = google_connect_url(owner_id, [CALENDAR_SCOPE], "add_task_reminder", str(task.id))
+        return ToolResult("Connect Google Workspace to add this reminder.", redirect_url=connect_url)
     except Exception as tool_error:
         return ToolResult(google_error_message(tool_error))
     set_task_reminder(task.id, owner_id, event["id"], event.get("htmlLink"))
@@ -65,7 +66,8 @@ def remove_task_reminder_tool(owner_id: UUID, task_query: str) -> ToolResult:
     try:
         delete_calendar_event(owner_id, task.reminder_event_id)
     except GoogleAuthorizationRequired as auth_error:
-        return ToolResult(str(auth_error), redirect_url=auth_error.connect_url)
+        connect_url = google_connect_url(owner_id, [CALENDAR_SCOPE], "remove_task_reminder", str(task.id))
+        return ToolResult("Connect Google Workspace to remove this reminder.", redirect_url=connect_url)
     except Exception as tool_error:
         return ToolResult(google_error_message(tool_error))
     set_task_reminder(task.id, owner_id, None)
