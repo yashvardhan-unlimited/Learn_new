@@ -28,7 +28,7 @@ async def chat(request: ChatRequest, user: UserRecord = Depends(get_current_user
         if _is_mcp_connection_error(error):
             raise HTTPException(
                 status_code=503,
-                detail="The chatbot tool process could not start. Check the backend deployment files and MCP dependencies.",
+                detail="The chatbot tools are temporarily unavailable. Check the backend logs and dependencies.",
             ) from error
         raise
 

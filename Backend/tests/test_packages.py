@@ -15,15 +15,14 @@ class PackageTests(unittest.TestCase):
     def test_mcp_server_and_tools_import_as_packages(self) -> None:
         from MCP_Server.server import mcp
         from MCP_Server.tools import register_task_tools
-        from app.mcp_client import SERVER_PATH
 
         self.assertIsNotNone(mcp)
         self.assertTrue(callable(register_task_tools))
-        self.assertTrue(SERVER_PATH.is_file())
+        self.assertEqual(len(mcp._tool_manager._tools), 12)
 
 
 class MCPIntegrationTests(unittest.IsolatedAsyncioTestCase):
-    async def test_stdio_server_exposes_tools_without_owner_id(self) -> None:
+    async def test_in_process_mcp_exposes_tools_without_owner_id(self) -> None:
         from app.mcp_client import task_mcp_client
 
         async with task_mcp_client(uuid4()) as client:

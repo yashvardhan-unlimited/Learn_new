@@ -9,10 +9,11 @@ This stdio MCP server exposes the task chatbot operations:
 - `summarize_tasks`
 - `execute_task`
 
-FastAPI starts this server automatically as a subprocess for each chat request.
-It communicates over stdin/stdout and does not expose a network port. The backend
+FastAPI imports this FastMCP registry and invokes its validated tools in-process.
+The deployment uses one Python process and exposes no MCP network port. The backend
 injects the authenticated `owner_id`, so the language model cannot select another
-user's task scope.
+user's task scope. Running `server.py` directly still exposes the same registry over
+stdio for local MCP inspection.
 
 To inspect the server with MCP Inspector:
 

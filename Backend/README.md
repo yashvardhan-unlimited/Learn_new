@@ -45,7 +45,7 @@ of truth.
    `python -m pip install -r requirements.txt`.
 3. Start MongoDB.
 4. Start FastAPI with `uv run --no-sync uvicorn app.main:app --reload`.
-   FastAPI launches the stdio MCP server automatically when chat is used.
+   FastAPI loads the MCP tool registry in-process when chat is used.
 
 The `--no-sync` option is recommended when the project is stored in OneDrive,
 which can lock files while uv checks the environment. Run `uv sync` separately
