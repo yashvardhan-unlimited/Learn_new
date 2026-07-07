@@ -56,6 +56,7 @@ export function useTasks() {
       setTasks((current) => current.map((task) => task.id === id ? saved : task))
     } catch (reason) {
       setError(errorText(reason, 'Unable to save task'))
+      throw reason
     }
   }
 
@@ -71,6 +72,7 @@ export function useTasks() {
       setTasks((current) => current.filter((task) => task.id !== id))
     } catch (reason) {
       setError(errorText(reason, 'Unable to delete task'))
+      throw reason
     }
   }
 

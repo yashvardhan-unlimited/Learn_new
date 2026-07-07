@@ -3,14 +3,19 @@
 FastAPI backend for authenticated task management, attachments, AI summaries, and
 an MCP-backed task chat assistant.
 
-## How to start the app
-So It will be done in 3 steps, 
-open 3 different terminals and run the below commands respectively in frontend and backend 
+## How to start the app locally
+
+Start MongoDB, then open two terminals and run:
+
 ``` powershell
 Frontend> npm run dev
 Backend> uv run --no-sync uvicorn app.main:app --reload
-Backend> uv run --no-sync python MCP_Server/server.py
 ```
+
+The local frontend automatically calls `http://127.0.0.1:8000`. Production
+builds call `https://notepad-backend-qec2.onrender.com`. Set `VITE_API_URL` in
+`Frontend/.env.local` or in the deployment environment to override either URL;
+see `Frontend/.env.example`.
 
 ## Structure
 

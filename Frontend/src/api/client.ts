@@ -1,6 +1,12 @@
 import { clearToken, getToken } from '../auth/token'
 
-export const API_URL = import.meta.env.VITE_API_URL ?? 'https://notepad-backend-qec2.onrender.com'
+const DEFAULT_API_URL = import.meta.env.DEV
+  ? 'http://127.0.0.1:8000'
+  : 'https://notepad-backend-qec2.onrender.com'
+
+// VITE_API_URL can override either default (for example, for preview deployments).
+// Removing trailing slashes keeps endpoint construction consistent.
+export const API_URL = (import.meta.env.VITE_API_URL || DEFAULT_API_URL).replace(/\/+$/, '')
 export const UNAUTHORIZED_EVENT = 'auth:unauthorized'
 
 export class ApiError extends Error {

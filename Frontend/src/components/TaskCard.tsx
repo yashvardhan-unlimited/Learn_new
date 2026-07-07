@@ -6,6 +6,7 @@ import { LoadingIndicator } from './LoadingIndicator'
 // directly fetch the full task list itself.
 interface TaskCardProps {
   task: TaskItem
+  viewMode?: 'cards' | 'list'
   onSave: (id: string, update: TaskUpdate) => Promise<void>
   onDelete: (id: string) => Promise<void>
   onAttach: (id: string, file: File) => Promise<void>
@@ -14,13 +15,17 @@ interface TaskCardProps {
   onSetReminder: (taskId: string, remove: boolean) => Promise<string>
 }
 
-export function TaskCard({ task, onSave, onDelete, onAttach, onDeleteAttachment, onViewAttachment, onSetReminder }: TaskCardProps) {
+export function TaskCard({ task, viewMode = 'cards', onSave, onDelete, onAttach, onDeleteAttachment, onViewAttachment, onSetReminder }: TaskCardProps) {
   // draft stores edits locally, so typing does not immediately update FastAPI.
   const [draft, setDraft] = useState<TaskUpdate>(task)
   // A union state records which action is running, or null when idle.
   const [busy, setBusy] = useState<'save' | 'delete' | 'reminder' | null>(null)
   const [attachmentBusy, setAttachmentBusy] = useState<string | null>(null)
   const [reminderMessage, setReminderMessage] = useState('')
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [isExiting, setIsExiting] = useState(false)
+  const [justSaved, setJustSaved] = useState(false)
+  const [expanded, setExpanded] = useState(task.isDraft === true)
 
   // When fresh task props arrive after a reload, replace the local draft.
   useEffect(() => setDraft(task), [task])
@@ -41,8 +46,18 @@ export function TaskCard({ task, onSave, onDelete, onAttach, onDeleteAttachment,
   async function perform(action: 'save' | 'delete') {
     setBusy(action)
     try {
-      if (action === 'save') await onSave(task.id, draft)
-      else await onDelete(task.id)
+      if (action === 'save') {
+        await onSave(task.id, draft)
+        setJustSaved(true)
+        window.setTimeout(() => setJustSaved(false), 900)
+      } else {
+        setIsExiting(true)
+        await wait(220)
+        await onDelete(task.id)
+      }
+    } catch {
+      setIsExiting(false)
+      setConfirmDelete(false)
     } finally {
       setBusy(null)
     }
@@ -77,8 +92,46 @@ export function TaskCard({ task, onSave, onDelete, onAttach, onDeleteAttachment,
     }
   }
 
+  const appearance = getCardAppearance(draft.status ?? task.status, draft.priority ?? task.priority, task.isDraft === true)
+
+  if (viewMode === 'list' && !expanded) {
+    return (
+      <article className={`task-card task-card-enter relative flex items-center gap-4 overflow-hidden rounded-xl border px-5 py-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md ${appearance.card}`}>
+        <div className={`absolute inset-y-0 left-0 w-1.5 ${appearance.accent}`} aria-hidden="true" />
+        <div className="min-w-0 flex-1 pl-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="truncate font-semibold text-slate-900">{task.title}</h2>
+            {task.isDraft && <span className="rounded-full bg-violet-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">Unsaved</span>}
+          </div>
+          <p className="mt-1 truncate text-sm text-slate-600">{task.description || 'No description'}</p>
+        </div>
+        <div className="hidden shrink-0 text-right sm:block">
+          <span className={`rounded-full px-2.5 py-1 text-xs font-bold capitalize ${appearance.badge}`}>{task.status.replace('_', ' ')}</span>
+          <p className={`mt-2 text-xs font-semibold capitalize ${appearance.priorityText}`}>{task.priority} priority</p>
+        </div>
+        <div className="hidden w-40 shrink-0 text-right text-xs text-slate-500 lg:block">
+          {task.due_at ? `Due ${new Date(task.due_at).toLocaleDateString()}` : 'No due date'}
+        </div>
+        <button onClick={() => setExpanded(true)} className="shrink-0 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700">Edit</button>
+      </article>
+    )
+  }
+
   return (
-    <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:shadow-md">
+    <article className={`task-card relative overflow-hidden rounded-2xl border p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg ${appearance.card} ${task.isDraft ? 'task-card-enter' : ''} ${isExiting ? 'task-card-exit pointer-events-none' : ''} ${justSaved ? 'task-card-saved' : ''}`}>
+      <div className={`absolute inset-y-0 left-0 w-1.5 ${appearance.accent}`} aria-hidden="true" />
+      <div className="mb-3 flex items-center justify-between gap-3 pl-1">
+        <div className="flex items-center gap-2">
+          <span className={`rounded-full px-2.5 py-1 text-xs font-bold capitalize ${appearance.badge}`}>
+            {(draft.status ?? task.status).replace('_', ' ')}
+          </span>
+          {task.isDraft && <span className="rounded-full bg-violet-600 px-2.5 py-1 text-xs font-bold text-white">Unsaved draft</span>}
+        </div>
+        <span className={`text-xs font-semibold capitalize ${appearance.priorityText}`}>
+          {draft.priority ?? task.priority} priority
+        </span>
+      </div>
+      {viewMode === 'list' && <button onClick={() => setExpanded(false)} className="absolute right-4 top-14 rounded-lg px-2 py-1 text-xs font-semibold text-slate-500 hover:bg-white hover:text-slate-800">Collapse</button>}
       <input
         aria-label="Task title"
         // ?? uses an empty string only when draft.title is null or undefined.
@@ -181,9 +234,17 @@ export function TaskCard({ task, onSave, onDelete, onAttach, onDeleteAttachment,
         >
           {busy === 'save' ? <LoadingIndicator label="Saving…" light compact /> : 'Save'}
         </button>
-        <button disabled={busy !== null} onClick={() => void perform('delete')} className="rounded-lg border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50">
-          {busy === 'delete' ? <LoadingIndicator label="Deleting…" compact /> : 'Delete'}
-        </button>
+        {confirmDelete ? (
+          <div className="task-confirm-enter flex items-center gap-2 rounded-xl bg-red-50 p-1.5" role="group" aria-label="Confirm task deletion">
+            <span className="pl-2 text-xs font-semibold text-red-700">Delete permanently?</span>
+            <button disabled={busy !== null} onClick={() => void perform('delete')} className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-red-700 disabled:opacity-50">
+              {busy === 'delete' ? <LoadingIndicator label="Deleting…" light compact /> : 'Yes, delete'}
+            </button>
+            <button disabled={busy !== null} onClick={() => setConfirmDelete(false)} className="rounded-lg px-2 py-1.5 text-xs font-semibold text-slate-600 hover:bg-white disabled:opacity-50">Cancel</button>
+          </div>
+        ) : (
+          <button disabled={busy !== null} onClick={() => setConfirmDelete(true)} className="rounded-lg border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50 hover:text-red-700 disabled:opacity-50">Delete</button>
+        )}
         <button title={!task.due_at ? 'Set and save a due date first' : task.reminder_event_id ? 'Remove this event from Google Calendar' : 'Add this task to Google Calendar'} disabled={busy !== null || task.isDraft || (!task.due_at && !task.reminder_event_id)} onClick={() => void changeReminder()} className={`rounded-lg border px-4 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50 ${task.reminder_event_id ? 'border-red-200 text-red-600 hover:bg-red-50' : 'border-indigo-200 text-indigo-600 hover:bg-indigo-50'}`}>
           {busy === 'reminder' ? <LoadingIndicator label={task.reminder_event_id ? 'Removing…' : 'Adding…'} compact /> : task.reminder_event_id ? 'Remove reminder' : 'Add reminder'}
         </button>
@@ -214,4 +275,36 @@ function getDeadlineState(dueAt: string | null, status: TaskStatus): { label: st
   if (millisecondsLeft < 0) return { label: 'Overdue', className: 'bg-red-50 text-red-700' }
   if (millisecondsLeft <= 24 * 60 * 60 * 1000) return { label: 'Due soon', className: 'bg-amber-50 text-amber-800' }
   return { label: 'Due', className: 'bg-indigo-50 text-indigo-700' }
+}
+
+function wait(milliseconds: number): Promise<void> {
+  return new Promise((resolve) => window.setTimeout(resolve, milliseconds))
+}
+
+function getCardAppearance(status: TaskStatus, priority: TaskPriority, isDraft: boolean) {
+  if (isDraft) return {
+    card: 'border-violet-300 bg-gradient-to-br from-violet-100 to-fuchsia-50',
+    badge: 'bg-white/80 text-violet-800',
+    accent: 'bg-violet-600',
+    priorityText: 'text-violet-700',
+  }
+  const statusStyles = {
+    completed: {
+      card: 'border-emerald-200 bg-gradient-to-br from-emerald-50 to-white',
+      badge: 'bg-emerald-100 text-emerald-800',
+      accent: 'bg-emerald-500',
+    },
+    in_progress: {
+      card: 'border-blue-200 bg-gradient-to-br from-blue-50 to-white',
+      badge: 'bg-blue-100 text-blue-800',
+      accent: 'bg-blue-500',
+    },
+    pending: {
+      card: 'border-amber-200 bg-gradient-to-br from-amber-50/70 to-white',
+      badge: 'bg-amber-100 text-amber-800',
+      accent: 'bg-amber-500',
+    },
+  }[status]
+  const priorityText = priority === 'high' ? 'text-red-600' : priority === 'medium' ? 'text-amber-700' : 'text-slate-500'
+  return { ...statusStyles, priorityText }
 }

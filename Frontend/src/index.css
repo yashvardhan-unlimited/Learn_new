@@ -29,3 +29,39 @@
     overflow: hidden;
   }
 }
+
+@keyframes task-enter {
+  from { opacity: 0; transform: translateY(-14px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes task-exit {
+  from { opacity: 1; transform: scale(1); max-height: 900px; }
+  to { opacity: 0; transform: translateX(28px) scale(0.96); max-height: 0; margin: 0; padding-block: 0; }
+}
+
+@keyframes task-saved {
+  0%, 100% { box-shadow: 0 1px 3px rgb(15 23 42 / 0.1); }
+  45% { box-shadow: 0 0 0 4px rgb(16 185 129 / 0.2), 0 12px 24px rgb(15 23 42 / 0.12); }
+}
+
+@keyframes confirm-enter {
+  from { opacity: 0; transform: scale(0.94); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.task-card-enter { animation: task-enter 320ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.task-card-exit { animation: task-exit 240ms ease-in both; transform-origin: center; }
+.task-card-saved { animation: task-saved 700ms ease-out; }
+.task-confirm-enter { animation: confirm-enter 160ms ease-out both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .task-card-enter, .task-card-exit, .task-card-saved, .task-confirm-enter { animation: none; }
+}
+
+.app-shell {
+  background:
+    radial-gradient(circle at 12% 18%, rgb(224 231 255 / 0.7), transparent 30%),
+    radial-gradient(circle at 72% 78%, rgb(250 232 255 / 0.55), transparent 32%),
+    linear-gradient(135deg, #f8fafc 0%, #f5f3ff 52%, #f8fafc 100%);
+}
