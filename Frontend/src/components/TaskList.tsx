@@ -22,8 +22,8 @@ export function TaskList({ tasks, viewMode, loading, onSave, onDelete, onAttach,
   return (
     <>
       {!tasks.length ? (
-        <div className="rounded-2xl border border-dashed border-slate-300 py-12 text-center">
-          <p className="font-medium text-slate-700">No tasks match these filters</p>
+        <div className="rounded-2xl border border-dashed border-slate-300 bg-white/30 py-12 text-center backdrop-blur-sm dark:border-slate-700 dark:bg-slate-900/30">
+          <p className="font-medium text-slate-700 dark:text-slate-300">No tasks match these filters</p>
         </div>
       ) : (
         <div className={viewMode === 'cards' ? 'grid gap-5 xl:grid-cols-2' : 'flex flex-col gap-3'}>

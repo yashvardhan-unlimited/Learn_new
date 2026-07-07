@@ -1,5 +1,6 @@
 /* Load Tailwind's generated utilities so className values work in components. */
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 /* Add a small set of default styles to standard HTML elements. */
 @layer base {
@@ -64,4 +65,36 @@
     radial-gradient(circle at 12% 18%, rgb(224 231 255 / 0.7), transparent 30%),
     radial-gradient(circle at 72% 78%, rgb(250 232 255 / 0.55), transparent 32%),
     linear-gradient(135deg, #f8fafc 0%, #f5f3ff 52%, #f8fafc 100%);
+}
+
+.dark .app-shell {
+  background:
+    radial-gradient(circle at 12% 18%, rgb(49 46 129 / 0.3), transparent 30%),
+    radial-gradient(circle at 72% 78%, rgb(88 28 135 / 0.2), transparent 32%),
+    linear-gradient(135deg, #020617 0%, #0f172a 52%, #111827 100%);
+}
+
+.dark .task-card {
+  border-color: rgb(51 65 85);
+  background: linear-gradient(135deg, rgb(30 41 59 / 0.96), rgb(15 23 42 / 0.96));
+  color: rgb(226 232 240);
+}
+
+.dark .task-card input,
+.dark .task-card textarea,
+.dark .task-card select {
+  border-color: rgb(71 85 105);
+  background-color: rgb(15 23 42 / 0.72);
+  color: rgb(241 245 249);
+}
+
+.dark .task-card input:hover,
+.dark .task-card textarea:hover { border-color: rgb(100 116 139); }
+.dark .task-card h2,
+.dark .task-card h3 { color: rgb(241 245 249); }
+.dark .task-card p { color: rgb(148 163 184); }
+
+.dark .task-card.task-card-draft {
+  border-color: rgb(139 92 246);
+  background: linear-gradient(135deg, rgb(76 29 149 / 0.72), rgb(30 27 75 / 0.92));
 }

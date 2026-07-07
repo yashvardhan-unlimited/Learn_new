@@ -21,8 +21,8 @@ export function TaskWorkspaceV2(props: Props) {
       <div className="pointer-events-none absolute -left-24 top-20 h-64 w-64 rounded-full bg-indigo-300/20 blur-3xl" /><div className="pointer-events-none absolute right-10 top-40 h-72 w-72 rounded-full bg-fuchsia-300/15 blur-3xl" />
       <header className="relative mb-6">
         <p className="text-xs font-bold uppercase tracking-[0.2em] text-indigo-600">Task workspace</p>
-        <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">Make progress today.</h1>
-        <p className="mt-2 text-sm text-slate-500">Organize priorities, meet deadlines, and keep momentum.</p>
+        <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-4xl">Make progress today.</h1>
+        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Organize priorities, meet deadlines, and keep momentum.</p>
       </header>
       <div className="relative"><TaskToolbar sort={sort} totalTasks={totalTasks} viewMode={viewMode} onViewChange={changeView} onCreate={onCreate} /></div>
       {error && <div className="relative mb-5 rounded-xl border border-red-200/80 bg-red-50/80 px-4 py-3 text-sm text-red-700 shadow-sm backdrop-blur">{error}</div>}

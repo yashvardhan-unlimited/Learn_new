@@ -12,6 +12,15 @@ export default function App() {
   const taskState = useTasks()
   const sort = useTaskSort(taskState.tasks)
   const [mobileChatOpen, setMobileChatOpen] = useState(false)
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem('theme')
+    return saved ? saved === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches
+  })
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', darkMode)
+    localStorage.setItem('theme', darkMode ? 'dark' : 'light')
+  }, [darkMode])
 
   useEffect(() => {
     if (!mobileChatOpen) return
@@ -25,7 +34,7 @@ export default function App() {
   return (
     <main className="app-shell min-h-screen bg-slate-50 lg:grid lg:h-dvh lg:min-h-0 lg:grid-cols-4 lg:overflow-hidden">
       <section className="lg:col-span-3 lg:flex lg:h-full lg:min-h-0 lg:flex-col lg:overflow-hidden">
-        <GlobalNavbar user={user!} onLogout={logout} />
+        <GlobalNavbar user={user!} onLogout={logout} darkMode={darkMode} onThemeToggle={() => setDarkMode((current) => !current)} />
         <TaskWorkspaceV2 tasks={sort.sortedTasks} sort={sort} totalTasks={taskState.tasks.length} loading={taskState.loading} error={taskState.error} onCreate={taskState.addDraft} onSave={taskState.saveTask} onDelete={taskState.removeTask} onAttach={taskState.attachFile} onDeleteAttachment={taskState.removeAttachment} onViewAttachment={taskState.viewFile} onSetReminder={taskState.setReminder} />
       </section>
       <ChatPanel onTasksChanged={taskState.refreshTasks} mobileOpen={mobileChatOpen} onMobileClose={() => setMobileChatOpen(false)} />

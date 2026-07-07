@@ -96,7 +96,7 @@ export function TaskCard({ task, viewMode = 'cards', onSave, onDelete, onAttach,
 
   if (viewMode === 'list' && !expanded) {
     return (
-      <article className={`task-card task-card-enter relative flex items-center gap-4 overflow-hidden rounded-xl border px-5 py-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md ${appearance.card}`}>
+      <article className={`task-card task-card-enter ${task.isDraft ? 'task-card-draft' : ''} relative flex items-center gap-4 overflow-hidden rounded-xl border px-5 py-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md ${appearance.card}`}>
         <div className={`absolute inset-y-0 left-0 w-1.5 ${appearance.accent}`} aria-hidden="true" />
         <div className="min-w-0 flex-1 pl-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -118,7 +118,7 @@ export function TaskCard({ task, viewMode = 'cards', onSave, onDelete, onAttach,
   }
 
   return (
-    <article className={`task-card relative overflow-hidden rounded-2xl border p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg ${appearance.card} ${task.isDraft ? 'task-card-enter' : ''} ${isExiting ? 'task-card-exit pointer-events-none' : ''} ${justSaved ? 'task-card-saved' : ''}`}>
+    <article className={`task-card ${task.isDraft ? 'task-card-draft' : ''} relative overflow-hidden rounded-2xl border p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg ${appearance.card} ${task.isDraft ? 'task-card-enter' : ''} ${isExiting ? 'task-card-exit pointer-events-none' : ''} ${justSaved ? 'task-card-saved' : ''}`}>
       <div className={`absolute inset-y-0 left-0 w-1.5 ${appearance.accent}`} aria-hidden="true" />
       <div className="mb-3 flex items-center justify-between gap-3 pl-1">
         <div className="flex items-center gap-2">
