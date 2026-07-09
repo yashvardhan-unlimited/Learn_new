@@ -7,6 +7,7 @@ import { LoadingIndicator } from './LoadingIndicator'
 interface TaskListProps {
   tasks: TaskItem[]
   viewMode: 'cards' | 'list'
+  confirmDelete: boolean
   loading: boolean
   onSave: (id: string, update: TaskUpdate) => Promise<void>
   onDelete: (id: string) => Promise<void>
@@ -16,7 +17,7 @@ interface TaskListProps {
   onSetReminder: (taskId: string, remove: boolean) => Promise<string>
 }
 
-export function TaskList({ tasks, viewMode, loading, onSave, onDelete, onAttach, onDeleteAttachment, onViewAttachment, onSetReminder }: TaskListProps) {
+export function TaskList({ tasks, viewMode, confirmDelete, loading, onSave, onDelete, onAttach, onDeleteAttachment, onViewAttachment, onSetReminder }: TaskListProps) {
   // Early returns make loading and empty states easy to read.
   if (loading) return <LoadingIndicator label="Loading tasks…" />
   return (
@@ -28,7 +29,7 @@ export function TaskList({ tasks, viewMode, loading, onSave, onDelete, onAttach,
       ) : (
         <div className={viewMode === 'cards' ? 'grid gap-5 xl:grid-cols-2' : 'flex flex-col gap-3'}>
           {tasks.map((task) => (
-            <TaskCard key={task.id} task={task} viewMode={viewMode} onSave={onSave} onDelete={onDelete} onAttach={onAttach} onDeleteAttachment={onDeleteAttachment} onViewAttachment={onViewAttachment} onSetReminder={onSetReminder} />
+            <TaskCard key={task.id} task={task} viewMode={viewMode} confirmBeforeDelete={confirmDelete} onSave={onSave} onDelete={onDelete} onAttach={onAttach} onDeleteAttachment={onDeleteAttachment} onViewAttachment={onViewAttachment} onSetReminder={onSetReminder} />
           ))}
         </div>
       )}

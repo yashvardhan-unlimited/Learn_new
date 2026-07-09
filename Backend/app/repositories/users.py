@@ -68,6 +68,17 @@ def save_google_refresh_token(user_id: UUID, refresh_token: str, scopes: list[st
         raise HTTPException(status_code=404, detail="User not found.")
 
 
+def disconnect_google(user_id: UUID) -> None:
+    """Remove this user's stored Google authorization from the application."""
+    try:
+        users_collection.update_one(
+            {"id": str(user_id)},
+            {"$unset": {"google_refresh_token": "", "google_scopes": ""}},
+        )
+    except PyMongoError as error:
+        raise database_unavailable(error) from error
+
+
 def _claim_legacy_tasks_for_first_user(user: UserRecord) -> None:
     if users_collection.count_documents({}) == 1:
         database.tasks.update_many(

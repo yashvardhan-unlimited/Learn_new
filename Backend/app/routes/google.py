@@ -4,18 +4,39 @@ from urllib.error import HTTPError, URLError
 from datetime import timedelta
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import RedirectResponse
 from jose import JWTError
 
 from app.config import settings
 from app.repositories.tasks import find_task, set_task_reminder
-from app.repositories.users import save_google_refresh_token
+from app.dependencies import get_current_user
+from app.models import UserRecord
+from app.repositories.users import disconnect_google, google_granted_scopes, google_refresh_token, save_google_refresh_token
 from app.security import decode_google_oauth_state_details
-from app.services.google_workspace import create_calendar_event, delete_calendar_event, exchange_authorization_code, google_authorization_url
+from app.services.google_workspace import CALENDAR_SCOPE, GMAIL_SCOPE, create_calendar_event, delete_calendar_event, exchange_authorization_code, google_authorization_url, google_connect_url
 
 
 router = APIRouter(prefix="/google", tags=["Google Workspace"])
+
+
+@router.get("/status")
+def google_status(user: UserRecord = Depends(get_current_user)) -> dict:
+    scopes = google_granted_scopes(user.id)
+    return {"connected": bool(google_refresh_token(user.id)), "calendar": CALENDAR_SCOPE in scopes, "gmail": GMAIL_SCOPE in scopes}
+
+
+@router.post("/authorize")
+def authorize_google(user: UserRecord = Depends(get_current_user)) -> dict:
+    if not settings.google_client_id or not settings.google_client_secret:
+        raise HTTPException(status_code=503, detail="Google OAuth client credentials are not configured.")
+    return {"redirect_url": google_connect_url(user.id, [CALENDAR_SCOPE, GMAIL_SCOPE])}
+
+
+@router.delete("/connection")
+def remove_google_connection(user: UserRecord = Depends(get_current_user)) -> dict:
+    disconnect_google(user.id)
+    return {"message": "Google Workspace disconnected."}
 
 
 @router.get("/connect")

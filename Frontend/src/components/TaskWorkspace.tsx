@@ -44,7 +44,7 @@ export function TaskWorkspace(props: TaskWorkspaceProps) {
         </div>
       </header>
       {error && <div className="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
-      <TaskList tasks={tasks} viewMode={viewMode} loading={loading} onSave={onSave} onDelete={onDelete} onAttach={onAttach} onDeleteAttachment={onDeleteAttachment} onViewAttachment={onViewAttachment} onSetReminder={onSetReminder} />
+      <TaskList tasks={tasks} viewMode={viewMode} confirmDelete loading={loading} onSave={onSave} onDelete={onDelete} onAttach={onAttach} onDeleteAttachment={onDeleteAttachment} onViewAttachment={onViewAttachment} onSetReminder={onSetReminder} />
     </div>
   )
 }

@@ -4,7 +4,7 @@ export function ChatMessage({ message }: { message: ChatMessageItem }) {
   const isUser = message.role === 'user'
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
-      <div className={`max-w-[88%] whitespace-pre-wrap rounded-2xl px-4 py-3 text-sm leading-6 ${isUser ? 'rounded-br-md bg-indigo-500 text-white' : 'rounded-bl-md bg-slate-700 text-slate-100'}`}>
+      <div className={`chat-bubble ${isUser ? 'chat-bubble-user' : 'chat-bubble-ai'} max-w-[88%] whitespace-pre-wrap rounded-2xl px-4 py-3 text-sm leading-6 ${isUser ? 'rounded-br-md bg-indigo-500 text-white' : 'rounded-bl-md bg-slate-700 text-slate-100'}`}>
         {linkify(message.content)}
       </div>
     </div>

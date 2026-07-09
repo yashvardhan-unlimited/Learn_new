@@ -7,6 +7,7 @@ import { LoadingIndicator } from './LoadingIndicator'
 interface TaskCardProps {
   task: TaskItem
   viewMode?: 'cards' | 'list'
+  confirmBeforeDelete: boolean
   onSave: (id: string, update: TaskUpdate) => Promise<void>
   onDelete: (id: string) => Promise<void>
   onAttach: (id: string, file: File) => Promise<void>
@@ -15,7 +16,7 @@ interface TaskCardProps {
   onSetReminder: (taskId: string, remove: boolean) => Promise<string>
 }
 
-export function TaskCard({ task, viewMode = 'cards', onSave, onDelete, onAttach, onDeleteAttachment, onViewAttachment, onSetReminder }: TaskCardProps) {
+export function TaskCard({ task, viewMode = 'cards', confirmBeforeDelete, onSave, onDelete, onAttach, onDeleteAttachment, onViewAttachment, onSetReminder }: TaskCardProps) {
   // draft stores edits locally, so typing does not immediately update FastAPI.
   const [draft, setDraft] = useState<TaskUpdate>(task)
   // A union state records which action is running, or null when idle.
@@ -243,7 +244,7 @@ export function TaskCard({ task, viewMode = 'cards', onSave, onDelete, onAttach,
             <button disabled={busy !== null} onClick={() => setConfirmDelete(false)} className="rounded-lg px-2 py-1.5 text-xs font-semibold text-slate-600 hover:bg-white disabled:opacity-50">Cancel</button>
           </div>
         ) : (
-          <button disabled={busy !== null} onClick={() => setConfirmDelete(true)} className="rounded-lg border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50 hover:text-red-700 disabled:opacity-50">Delete</button>
+          <button disabled={busy !== null} onClick={() => confirmBeforeDelete ? setConfirmDelete(true) : void perform('delete')} className="rounded-lg border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50 hover:text-red-700 disabled:opacity-50">Delete</button>
         )}
         <button title={!task.due_at ? 'Set and save a due date first' : task.reminder_event_id ? 'Remove this event from Google Calendar' : 'Add this task to Google Calendar'} disabled={busy !== null || task.isDraft || (!task.due_at && !task.reminder_event_id)} onClick={() => void changeReminder()} className={`rounded-lg border px-4 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50 ${task.reminder_event_id ? 'border-red-200 text-red-600 hover:bg-red-50' : 'border-indigo-200 text-indigo-600 hover:bg-indigo-50'}`}>
           {busy === 'reminder' ? <LoadingIndicator label={task.reminder_event_id ? 'Removing…' : 'Adding…'} compact /> : task.reminder_event_id ? 'Remove reminder' : 'Add reminder'}
