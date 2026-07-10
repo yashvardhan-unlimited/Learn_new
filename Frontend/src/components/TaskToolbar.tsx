@@ -8,6 +8,27 @@ export function TaskToolbar({ sort, totalTasks, viewMode, onViewChange, onCreate
   return (
     <div className="mb-7 rounded-2xl border border-white/70 bg-white/65 p-3 shadow-[0_12px_40px_rgb(79_70_229/0.08)] backdrop-blur-xl transition-colors dark:border-slate-700/70 dark:bg-slate-900/70 sm:p-4">
       <div className="flex flex-wrap items-center gap-3">
+        <label className="relative min-w-0 flex-1 sm:min-w-72" title="Search tasks">
+          <span className="sr-only">Search tasks</span>
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">Q</span>
+          <input
+            type="search"
+            value={sort.searchQuery}
+            onChange={(event) => sort.setSearchQuery(event.target.value)}
+            placeholder="Search notes by keyword"
+            className="h-10 w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-9 text-sm font-medium text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 hover:border-indigo-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-indigo-900"
+          />
+          {sort.searchQuery && (
+            <button
+              type="button"
+              onClick={() => sort.setSearchQuery('')}
+              className="absolute right-2 top-1/2 grid h-6 w-6 -translate-y-1/2 place-items-center rounded-lg text-xs font-bold text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-700 dark:hover:text-white"
+              aria-label="Clear search"
+            >
+              x
+            </button>
+          )}
+        </label>
         <div className="flex rounded-xl border border-slate-200/80 bg-slate-100/70 p-1 dark:border-slate-700 dark:bg-slate-800/80" role="group" aria-label="Task view">
           <ViewButton active={viewMode === 'cards'} onClick={() => onViewChange('cards')} icon="▦">Cards</ViewButton><ViewButton active={viewMode === 'list'} onClick={() => onViewChange('list')} icon="☷">List</ViewButton>
         </div>
